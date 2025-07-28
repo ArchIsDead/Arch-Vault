@@ -1,0 +1,125 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+local ResetRemote = ReplicatedStorage:WaitForChild("ResetCharacter")
+
+local function formatNumber(num)
+    if num >= 1e12 then
+        return string.format("%.1ft", num/1e12)
+    elseif num >= 1e9 then
+        return string.format("%.1fb", num/1e9)
+    elseif num >= 1e6 then
+        return string.format("%.1fm", num/1e6)
+    elseif num >= 1e3 then
+        return string.format("%.1fk", num/1e3)
+    else
+        return tostring(num)
+    end
+end
+
+local mainGui = Instance.new("ScreenGui")
+mainGui.Name = "MainGui"
+mainGui.Parent = game:GetService("CoreGui")
+
+local cashText = Instance.new("TextLabel")
+cashText.Name = "CashText"
+cashText.Size = UDim2.new(0, 200, 0, 50)
+cashText.Position = UDim2.new(0, 20, 0.5, -25)
+cashText.BackgroundTransparency = 1
+cashText.TextColor3 = Color3.new(1, 1, 1)
+cashText.TextStrokeTransparency = 0
+cashText.TextStrokeColor3 = Color3.new(0, 0, 0)
+cashText.TextSize = 24
+cashText.Font = Enum.Font.SourceSansBold
+cashText.Text = "Cash: 0"
+cashText.TextXAlignment = Enum.TextXAlignment.Left
+cashText.Parent = mainGui
+
+local toggleButton = Instance.new("TextButton")
+toggleButton.Name = "ToggleButton"
+toggleButton.Size = UDim2.new(0, 150, 0, 50)
+toggleButton.Position = UDim2.new(1, -170, 0.5, -25)
+toggleButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+toggleButton.BackgroundTransparency = 0.5
+toggleButton.TextColor3 = Color3.new(1, 1, 1)
+toggleButton.TextSize = 20
+toggleButton.Font = Enum.Font.SourceSansBold
+toggleButton.Text = "OFF"
+toggleButton.Parent = mainGui
+
+local function updateCashDisplay()
+    while task.wait(0.1) do
+        local cash = Players.LocalPlayer.Stats.Cash.Value
+        cashText.Text = "Cash: "..formatNumber(cash)
+    end
+end
+
+task.spawn(updateCashDisplay)
+
+local enabled = false
+local running = false
+
+local teleportPoints = {
+    CFrame.new(-226.428574, 438.207336, 2142.48315),
+    CFrame.new(-427.694794, 846.207336, 3204.15942),
+    CFrame.new(42.3659668, 1266.20728, 4043.65186),
+    CFrame.new(-1142.23804, 1550.20728, 4900.12549)
+}
+
+local function getTouchInterests()
+    local interests = {}
+    for _, item in ipairs(workspace.Camp:GetDescendants()) do
+        if item:IsA("TouchTransmitter") then
+            table.insert(interests, item)
+        end
+    end
+    return interests
+end
+
+local function executeFullSequence()
+    running = true
+    while enabled do
+        local character = Players.LocalPlayer.Character or Players.LocalPlayer.CharacterAdded:Wait()
+        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+        for _, cframe in ipairs(teleportPoints) do
+            if not enabled then break end
+            humanoidRootPart.CFrame = cframe
+            task.wait(0.2)
+        end
+        if enabled then
+            local touchInterests = getTouchInterests()
+            for _, touchInterest in ipairs(touchInterests) do
+                if not enabled then break end
+                firetouchinterest(humanoidRootPart, touchInterest.Parent, 0)
+                firetouchinterest(humanoidRootPart, touchInterest.Parent, 1)
+                task.wait(0.1)
+            end
+        end
+        if enabled then
+            ResetRemote:FireServer(false)
+            task.wait(1)
+        end
+    end
+    running = false
+end
+
+local function toggleScript()
+    enabled = not enabled
+    toggleButton.Text = enabled and "ON" or "OFF"
+    toggleButton.BackgroundColor3 = enabled and Color3.fromRGB(0, 100, 0) or Color3.fromRGB(100, 0, 0)
+    if enabled and not running then
+        task.spawn(executeFullSequence)
+    end
+end
+
+toggleButton.MouseButton1Click:Connect(toggleScript)
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.F then
+        toggleScript()
+    end
+end)
+
+while task.wait() do
+    ResetRemote:FireServer(false)
+end
