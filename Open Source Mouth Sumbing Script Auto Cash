@@ -1,125 +1,113 @@
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local UserInputService = game:GetService("UserInputService")
-local ResetRemote = ReplicatedStorage:WaitForChild("ResetCharacter")
+local )#_PlrService = game:GetService("Players")
+local )#_ReplStorage = game:GetService("ReplicatedStorage")
+local )#_InputService = game:GetService("UserInputService")
+local )#_ResetFunc = )#_ReplStorage:WaitForChild("ResetCharacter")
 
-local function formatNumber(num)
-    if num >= 1e12 then
-        return string.format("%.1ft", num/1e12)
-    elseif num >= 1e9 then
-        return string.format("%.1fb", num/1e9)
-    elseif num >= 1e6 then
-        return string.format("%.1fm", num/1e6)
-    elseif num >= 1e3 then
-        return string.format("%.1fk", num/1e3)
-    else
-        return tostring(num)
-    end
+local function )#_FormatNum(_)
+    if _ >= 1e12 then return string.format("%.1ft", _/1e12) end
+    if _ >= 1e9 then return string.format("%.1fb", _/1e9) end
+    if _ >= 1e6 then return string.format("%.1fm", _/1e6) end
+    if _ >= 1e3 then return string.format("%.1fk", _/1e3) end
+    return tostring(math.floor(_))
 end
 
-local mainGui = Instance.new("ScreenGui")
-mainGui.Name = "MainGui"
-mainGui.Parent = game:GetService("CoreGui")
+local )#-$72-3 = Instance.new("ScreenGui")
+)#-$72-3.Name = ")#-$72-3"
+)#-$72-3.Parent = game:GetService("CoreGui")
 
-local cashText = Instance.new("TextLabel")
-cashText.Name = "CashText"
-cashText.Size = UDim2.new(0, 200, 0, 50)
-cashText.Position = UDim2.new(0, 20, 0.5, -25)
-cashText.BackgroundTransparency = 1
-cashText.TextColor3 = Color3.new(1, 1, 1)
-cashText.TextStrokeTransparency = 0
-cashText.TextStrokeColor3 = Color3.new(0, 0, 0)
-cashText.TextSize = 24
-cashText.Font = Enum.Font.SourceSansBold
-cashText.Text = "Cash: 0"
-cashText.TextXAlignment = Enum.TextXAlignment.Left
-cashText.Parent = mainGui
+local )#_CashUI = Instance.new("TextLabel")
+)#_CashUI.Name = ")#_CashUI"
+)#_CashUI.Size = UDim2.new(0, 200, 0, 50)
+)#_CashUI.Position = UDim2.new(0, 20, 0.5, -25)
+)#_CashUI.BackgroundTransparency = 1
+)#_CashUI.TextColor3 = Color3.new(1, 1, 1)
+)#_CashUI.TextStrokeTransparency = 0
+)#_CashUI.TextStrokeColor3 = Color3.new(0, 0, 0)
+)#_CashUI.TextSize = 24
+)#_CashUI.Font = Enum.Font.SourceSansBold
+)#_CashUI.Text = "Cash: 0"
+)#_CashUI.TextXAlignment = Enum.TextXAlignment.Left
+)#_CashUI.Parent = )#-$72-3
 
-local toggleButton = Instance.new("TextButton")
-toggleButton.Name = "ToggleButton"
-toggleButton.Size = UDim2.new(0, 150, 0, 50)
-toggleButton.Position = UDim2.new(1, -170, 0.5, -25)
-toggleButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-toggleButton.BackgroundTransparency = 0.5
-toggleButton.TextColor3 = Color3.new(1, 1, 1)
-toggleButton.TextSize = 20
-toggleButton.Font = Enum.Font.SourceSansBold
-toggleButton.Text = "OFF"
-toggleButton.Parent = mainGui
+local )#_ToggleUI = Instance.new("TextButton")
+)#_ToggleUI.Name = ")#_ToggleUI"
+)#_ToggleUI.Size = UDim2.new(0, 150, 0, 50)
+)#_ToggleUI.Position = UDim2.new(1, -170, 0.5, -25)
+)#_ToggleUI.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+)#_ToggleUI.BackgroundTransparency = 0.5
+)#_ToggleUI.TextColor3 = Color3.new(1, 1, 1)
+)#_ToggleUI.TextSize = 20
+)#_ToggleUI.Font = Enum.Font.SourceSansBold
+)#_ToggleUI.Text = "OFF"
+)#_ToggleUI.Parent = )#-$72-3
 
-local function updateCashDisplay()
+local function )#_UpdateCash()
     while task.wait(0.1) do
-        local cash = Players.LocalPlayer.Stats.Cash.Value
-        cashText.Text = "Cash: "..formatNumber(cash)
+        )#_CashUI.Text = "Cash: "..)#_FormatNum()#_PlrService.LocalPlayer.Stats.Cash.Value)
     end
 end
 
-task.spawn(updateCashDisplay)
+task.spawn()#_UpdateCash)
 
-local enabled = false
-local running = false
-
-local teleportPoints = {
+local )#_Enabled = false
+local )#_TeleportSpots = {
     CFrame.new(-226.428574, 438.207336, 2142.48315),
     CFrame.new(-427.694794, 846.207336, 3204.15942),
     CFrame.new(42.3659668, 1266.20728, 4043.65186),
     CFrame.new(-1142.23804, 1550.20728, 4900.12549)
 }
 
-local function getTouchInterests()
-    local interests = {}
-    for _, item in ipairs(workspace.Camp:GetDescendants()) do
-        if item:IsA("TouchTransmitter") then
-            table.insert(interests, item)
-        end
+local function )#_GetTouchies()
+    local _ = {}
+    for _, __ in ipairs(workspace.Camp:GetDescendants()) do
+        if __:IsA("TouchTransmitter") then table.insert(_, __) end
     end
-    return interests
+    return _
 end
 
-local function executeFullSequence()
-    running = true
-    while enabled do
-        local character = Players.LocalPlayer.Character or Players.LocalPlayer.CharacterAdded:Wait()
-        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-        for _, cframe in ipairs(teleportPoints) do
-            if not enabled then break end
-            humanoidRootPart.CFrame = cframe
-            task.wait(0.2)
-        end
-        if enabled then
-            local touchInterests = getTouchInterests()
-            for _, touchInterest in ipairs(touchInterests) do
-                if not enabled then break end
-                firetouchinterest(humanoidRootPart, touchInterest.Parent, 0)
-                firetouchinterest(humanoidRootPart, touchInterest.Parent, 1)
-                task.wait(0.1)
-            end
-        end
-        if enabled then
-            ResetRemote:FireServer(false)
-            task.wait(1)
+local function )#_DoFarm()
+    local _ = )#_PlrService.LocalPlayer.Character or )#_PlrService.LocalPlayer.CharacterAdded:Wait()
+    local __ = _:WaitForChild("HumanoidRootPart")
+    
+    for _, ___ in ipairs()#_TeleportSpots) do
+        if not )#_Enabled then return end
+        __.CFrame = ___
+        task.wait(0.2)
+    end
+    
+    if )#_Enabled then
+        for _, ___ in ipairs()#_GetTouchies()) do
+            if not )#_Enabled then return end
+            firetouchinterest(__, ___.Parent, 0)
+            firetouchinterest(__, ___.Parent, 1)
+            task.wait(0.1)
         end
     end
-    running = false
-end
-
-local function toggleScript()
-    enabled = not enabled
-    toggleButton.Text = enabled and "ON" or "OFF"
-    toggleButton.BackgroundColor3 = enabled and Color3.fromRGB(0, 100, 0) or Color3.fromRGB(100, 0, 0)
-    if enabled and not running then
-        task.spawn(executeFullSequence)
+    
+    if )#_Enabled then
+        )#_ResetFunc:FireServer(false)
+        task.wait(1)
     end
 end
 
-toggleButton.MouseButton1Click:Connect(toggleScript)
+local function )#_FarmLoop()
+    while )#_Enabled do
+        )#_DoFarm()
+        task.wait()
+    end
+end
 
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed and input.KeyCode == Enum.KeyCode.F then
-        toggleScript()
+local function )#_Toggle()
+    )#_Enabled = not )#_Enabled
+    )#_ToggleUI.Text = )#_Enabled and "ON" or "OFF"
+    )#_ToggleUI.BackgroundColor3 = )#_Enabled and Color3.fromRGB(0, 100, 0) or Color3.fromRGB(100, 0, 0)
+    if )#_Enabled then task.spawn()#_FarmLoop) end
+end
+
+)#_ToggleUI.MouseButton1Click:Connect()#_Toggle)
+
+)#_InputService.InputBegan:Connect(function(_, __)
+    if not __ and _.KeyCode == Enum.KeyCode.F then
+        )#_Toggle()
     end
 end)
-
-while task.wait() do
-    ResetRemote:FireServer(false)
-end
