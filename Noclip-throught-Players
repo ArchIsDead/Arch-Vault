@@ -1,0 +1,65 @@
+-- why did you checked the script? you dont trust me? --
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local localPlayer = Players.LocalPlayer
+local noclipConnections = {}
+
+local function enableNoclip(player)
+    if player == localPlayer then return end
+    
+    local character = player.Character or player.CharacterAdded:Wait()
+    
+    local humanoid = character:WaitForChild("Humanoid")
+    
+    local noclipConnection
+    noclipConnection = RunService.Stepped:Connect(function()
+        if character and humanoid then
+            for _, part in pairs(character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        else
+            noclipConnection:Disconnect()
+            noclipConnections[player] = nil
+        end
+    end)
+    
+    noclipConnections[player] = noclipConnection
+    
+    player.AncestryChanged:Connect(function()
+        if not player:IsDescendantOf(Players) then
+            if noclipConnections[player] then
+                noclipConnections[player]:Disconnect()
+                noclipConnections[player] = nil
+            end
+        end
+    end)
+end
+
+for _, player in ipairs(Players:GetPlayers()) do
+    if player ~= localPlayer then
+        if player.Character then
+            enableNoclip(player)
+        end
+        player.CharacterAdded:Connect(function(character)
+            enableNoclip(player)
+        end)
+    end
+end
+
+Players.PlayerAdded:Connect(function(player)
+    if player ~= localPlayer then
+        player.CharacterAdded:Connect(function(character)
+            enableNoclip(player)
+        end)
+    end
+end)
+
+script.Destroying:Connect(function()
+    for player, connection in pairs(noclipConnections) do
+        connection:Disconnect()
+    end
+    table.clear(noclipConnections)
+end)
