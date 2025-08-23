@@ -8,7 +8,7 @@
 
 ![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&pause=1000&color=FF7F50&width=435&lines=Welcome+to+Arch-Vault!;Roblox+Script+Vault;Get+Various+Script;Uploaded+by+ArchIsDead)
 
-![Visitors](https://api.visitorbadge.io/api/visitors?path=https://github.com/ArchIsDead/Arch-Vault&label=VISITORS&countColor=%23263759)
+![Visitors](https://img.shields.io/badge/Updated-Daily-brightgreen)
 
 <img src="https://img.shields.io/badge/Language-Lua-blue?logo=lua" width="100">
 
