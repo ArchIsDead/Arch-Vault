@@ -19,7 +19,7 @@ local function mak(player)
     local pin = Instance.new("TextLabel")
     pin.Size = UDim2.new(1, 0, 1, 0)
     pin.BackgroundTransparency = 1
-    pin.Text = "0ms"
+    pin.Text = "idk gang"
     pin.Font = Enum.Font.SciFi
     pin.TextSize = 12
     pin.Parent = bb
