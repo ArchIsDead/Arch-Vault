@@ -10,6 +10,6 @@
 
 ![Visitors](https://api.visitorbadge.io/api/visitors?path=https://github.com/ArchIsDead/Arch-Vault&label=VISITORS&countColor=%23263759)
 
-<img src="https://github.com/ArchIsDead/Arch-Vault/raw/main/assets/vault.svg" width="100">
+<img src="https://img.shields.io/badge/Language-Lua-blue?logo=lua" width="100">
 
 </div>
