@@ -6,7 +6,7 @@
 ![Forks](https://img.shields.io/github/forks/ArchIsDead/Arch-Vault?style=social&logo=git&color=blue)
 ![Issues](https://img.shields.io/github/issues/ArchIsDead/Arch-Vault?color=red&logo=git)
 
-![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&pause=1000&color=FF7F50&width=435&lines=Welcome+to+Arch-Vault!;Roblox+Script+Vault;Get+Various+Script;Uploaded+by+ArchIsDead)
+![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&pause=1000&color=FF7F50&width=435&lines=Welcome+to+Arch-Vault!;Roblox+Script+Vault;Get+Various+Script+You+Can+Use+Freely;Uploaded+by+ArchIsDead)
 
 ![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&pause=1000&color=FF7F50&width=435&lines=Use+at+your+own+risk!)
 
