@@ -9,7 +9,7 @@ local bench = false
 local shadow = false
 local debris = false
 
-local function delete(obj)
+local function destroy(obj)
     if obj then
         obj:Destroy()
     end
@@ -18,33 +18,33 @@ end
 local map = workspace.Map
 
 if grass then
-    delete(map.GrassBottom)
-    delete(map.GrassTop)
-    delete(map.Grass)
+    destroy(map.GrassBottom)
+    destroy(map.GrassTop)
+    destroy(map.Grass)
 end
 
 if trashcan then
-    delete(map.Trash)
+    destroy(map.Trash)
 end
 
 if trees then
-    delete(map.Trees)
+    destroy(map.Trees)
 end
 
 if walls then
-    delete(map.Walls)
-    delete(map.GrassTop)
-    delete(map.Grass)
+    destroy(map.Walls)
+    destroy(map.GrassTop)
+    destroy(map.Grass)
 end
 
 if leaderboard then
-    delete(map["Total Kills Leaderboard"])
-    delete(map["Total Kills Leaderboard Real"])
-    delete(workspace.Thrown["Donation Leaderboard"])
+    destroy(map["Total Kills Leaderboard"])
+    destroy(map["Total Kills Leaderboard Real"])
+    destroy(workspace.Thrown["Donation Leaderboard"])
 end
 
 if bench then
-    delete(map.Benchs)
+    destroy(map.Benchs)
 end
 
 if shadow then
@@ -58,7 +58,7 @@ end
 if debris then
     for _, obj in pairs(workspace.Thrown:GetChildren()) do
         if obj.Name ~= "Aurora" and obj.Name ~= "Donation Leaderboard" then
-            delete(obj)
+            destroy(obj)
         end
     end
 end
