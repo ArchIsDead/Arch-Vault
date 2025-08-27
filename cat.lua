@@ -1,3 +1,5 @@
+-- yes very scary cat
+
 local x = nil
 
 local function c()
