@@ -2,49 +2,43 @@
 
 local grass = false
 local trashcan = false
-local trees = false
+local trees = true
 local walls = false
 local leaderboard = false
 local bench = false
-local shadow = false
-local debris = false
-
-local function destroy(obj)
-    if obj then
-        obj:Destroy()
-    end
-end
+local shadow = true
+local debris = true
 
 local map = workspace.Map
 
 if grass then
-    destroy(map.GrassBottom)
-    destroy(map.GrassTop)
-    destroy(map.Grass)
+    if map:FindFirstChild("GrassBottom") then map.GrassBottom:Destroy() end
+    if map:FindFirstChild("GrassTop") then map.GrassTop:Destroy() end
+    if map:FindFirstChild("Grass") then map.Grass:Destroy() end
 end
 
 if trashcan then
-    destroy(map.Trash)
+    if map:FindFirstChild("Trash") then map.Trash:Destroy() end
 end
 
 if trees then
-    destroy(map.Trees)
+    if map:FindFirstChild("Trees") then map.Trees:Destroy() end
 end
 
 if walls then
-    destroy(map.Walls)
-    destroy(map.GrassTop)
-    destroy(map.Grass)
+    if map:FindFirstChild("Walls") then map.Walls:Destroy() end
+    if map:FindFirstChild("GrassTop") then map.GrassTop:Destroy() end
+    if map:FindFirstChild("Grass") then map.Grass:Destroy() end
 end
 
 if leaderboard then
-    destroy(map["Total Kills Leaderboard"])
-    destroy(map["Total Kills Leaderboard Real"])
-    destroy(workspace.Thrown["Donation Leaderboard"])
+    if map:FindFirstChild("Total Kills Leaderboard") then map["Total Kills Leaderboard"]:Destroy() end
+    if map:FindFirstChild("Total Kills Leaderboard Real") then map["Total Kills Leaderboard Real"]:Destroy() end
+    if workspace.Thrown:FindFirstChild("Donation Leaderboard") then workspace.Thrown["Donation Leaderboard"]:Destroy() end
 end
 
 if bench then
-    destroy(map.Benchs)
+    if map:FindFirstChild("Benchs") then map.Benchs:Destroy() end
 end
 
 if shadow then
@@ -58,7 +52,7 @@ end
 if debris then
     for _, obj in pairs(workspace.Thrown:GetChildren()) do
         if obj.Name ~= "Aurora" and obj.Name ~= "Donation Leaderboard" then
-            destroy(obj)
+            obj:Destroy()
         end
     end
 end
