@@ -139,11 +139,21 @@ local Tabs = {
 }
 
 local TabHandles = {
-    Elements = Tabs.Main:Tab({ Title = "loc:JOB", Icon = "info", Desc = "Information you need to know" }),
+    Elementsybau = Tabs.Main:Tab({ Title = "loc:JOB", Icon = "info", Desc = "Information you need to know" }),
     Elements = Tabs.Main:Tab({ Title = "loc:UI_ELEMENTS", Icon = "square-library", Desc = "Script Vault" }),
     Appearance = Tabs.Stuff:Tab({ Title = "loc:APPEARANCE", Icon = "brush" }),
     Config = Tabs.Stuff:Tab({ Title = "loc:CONFIGURATION", Icon = "settings" })
 }
+
+TabHandles.Elementsybau:Paragraph({
+    Title = "Warning!",
+    Desc = "We are not responsible for your action or your account ban or other things about your account!",
+    Image = "triangle-alert",
+    ImageSize = 20,
+    Thumbnail = "",
+    ThumbnailSize = 80,
+    Color = "Yellow"
+})
 
 TabHandles.Elements:Paragraph({
     Title = "Arch-Vault",
