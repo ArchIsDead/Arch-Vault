@@ -530,6 +530,30 @@ ElementsSection:Button({
 
 ElementsSection:Divider()
 
+ElementsSection:Paragraph({
+    Title = "Camlock(Universal)",
+    Desc = "Some kind of aimbot and gud",
+    Image = "info",
+    ImageSize = 20,
+    Color = "White"
+})
+
+ElementsSection:Button({
+    Title = "Camlock(Universal)",
+    Icon = "code",
+    Callback = function()
+        WindUI:Notify({
+            Title = "Info",
+            Content = "use at your own risk!",
+            Icon = "bell",
+            Duration = 3
+        })
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ArchIsDead/Arch-Vault/refs/heads/main/camlock-tuff.lua"))()
+    end
+})
+
+ElementsSection:Divider()
+
 TabHandles.Appearance:Paragraph({
     Title = "Customize Interface",
     Desc = "Personalize your experience",
