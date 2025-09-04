@@ -161,6 +161,13 @@ local ElementsSection = TabHandles.Elements:Section({
 
 TabHandles.Elements:Divider()
 
+local mangopmo = TabHandles.Elements:Section({
+    Title = "Teleport",
+    Icon = "navigation-2",
+})
+
+TabHandles.Elements:Divider()
+
 TabHandles.Elements:Paragraph({
     Title = "Support Me ❤️",
     Desc = "github.com/ArchIsDead/Arch-Vault",
@@ -543,13 +550,6 @@ ElementsSection:Button({
 
 ElementsSection:Divider()
 
-local mangopmo = TabHandles.Elements:Section({
-    Title = "Teleport",
-    Icon = "navigation-2",
-})
-
-TabHandles.Elements:Divider()
-
 local Dropdown = mangopmo:Dropdown({
     Title = "Teleport Locations",
     Values = { "Death Counter Room", "Atomic Room", "Baseplate", "Mountain 1", "Mountain 2", "Mountain 3" },
@@ -575,8 +575,6 @@ local Dropdown = mangopmo:Dropdown({
         
     end
 })
-
-TabHandles.Elements:Divider()
 
 
 
