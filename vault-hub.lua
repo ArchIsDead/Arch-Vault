@@ -552,7 +552,7 @@ TabHandles.Elements:Divider()
 
 local Dropdown = mangopmo:Dropdown({
     Title = "Teleport Locations",
-    Values = { "Death Counter", "atomic", "baseplate", "mountain 1", "mountain 2", "mountain 3" },
+    Values = { "Death Counter Room", "Atomic Room", "Baseplate", "Mountain 1", "Mountain 2", "Mountain 3" },
     Value = "Select Location",
     Callback = function(option) 
         local player = game.Players.LocalPlayer
