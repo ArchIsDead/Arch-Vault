@@ -543,6 +543,53 @@ ElementsSection:Button({
 
 ElementsSection:Divider()
 
+local mangopmo = TabHandles.Elements:Section({
+    Title = "Teleport",
+    Icon = "navigation-2",
+})
+
+TabHandles.Elements:Divider()
+
+local Dropdown = mangopmo:Dropdown({
+    Title = "Teleport Locations",
+    Values = { "Death Counter", "atomic", "baseplate", "mountain 1", "mountain 2", "mountain 3" },
+    Value = "Select Location",
+    Callback = function(option) 
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+        
+        if option == "Death Counter Room" then
+            humanoidRootPart.CFrame = CFrame.new(-92, 29, 20347)
+        elseif option == "Atomic Room" then
+            humanoidRootPart.CFrame = CFrame.new(1079, 155, 23003)
+        elseif option == "Baseplate" then
+            humanoidRootPart.CFrame = CFrame.new(968, 20, 23088)
+        elseif option == "Mountain 1" then
+            humanoidRootPart.CFrame = CFrame.new(266, 699, 458)
+        elseif option == "Mountain 2" then
+            humanoidRootPart.CFrame = CFrame.new(551, 630, -265)
+        elseif option == "Mountain 3" then
+            humanoidRootPart.CFrame = CFrame.new(-107, 642, -328)
+        end
+        
+    end
+})
+
+TabHandles.Elements:Divider()
+
+
+
+
+
+
+
+
+
+
+
+
+
 TabHandles.Appearance:Paragraph({
     Title = "Customize Interface",
     Desc = "Personalize your experience",
@@ -592,6 +639,16 @@ local transparencySlider = TabHandles.Appearance:Slider({
         Window:ToggleTransparency(tonumber(value) > 0)
     end
 })
+
+
+
+
+
+
+
+
+
+
 
 
 WindUI:AddTheme({
