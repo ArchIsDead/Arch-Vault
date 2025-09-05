@@ -182,6 +182,13 @@ local sybau = TabHandles.Elements:Section({
 
 TabHandles.Elements:Divider()
 
+local zawarudo = TabHandles.Elements:Section({
+    Title = "Shader",
+    Icon = "sun",
+})
+
+TabHandles.Elements:Divider()
+
 TabHandles.Elements:Paragraph({
     Title = "Support Me ❤️",
     Desc = "github.com/ArchIsDead/Arch-Vault",
@@ -653,7 +660,7 @@ local togglemango = gooner:Toggle({
     Title = "No Slide Dash Cooldown",
     Desc = "Remove slide dash cooldown ",
     Icon = "refresh-ccw",
-    Type = "package-open",
+    Type = "Checkbox",
     Default = false,
     Callback = function(state)
         workspace:SetAttribute("NoDashCooldown", state)
@@ -663,8 +670,8 @@ local togglemango = gooner:Toggle({
 local togglesybau = gooner:Toggle({
     Title = "Extra Slots",
     Desc = "Gives free extra slots",
-    Icon = "plus-square",
-    Type = "package-open",
+    Icon = "square-plus",
+    Type = "Checkbox",
     Default = false,
     Callback = function(state)
         local Players = game:GetService("Players")
@@ -677,7 +684,7 @@ local togglepmo = gooner:Toggle({
     Title = "Emote Search Bar",
     Desc = "Gives free emote search bar",
     Icon = "search",
-    Type = "package-open",
+    Type = "Checkbox",
     Default = false,
     Callback = function(state)
         local Players = game:GetService("Players")
@@ -734,7 +741,365 @@ local buttonmaybe = sybau:Button({
 
 sybau:Divider()
 
+local Lighting = game:GetService("Lighting")
 
+local function clear()
+    for i, v in next, Lighting:GetDescendants() do 
+        if v:IsA("PostEffect") or v:IsA("Sky") or v:IsA("Atmosphere") or v:IsA("ParticleEmitter") then
+            v:Destroy() 
+        end
+    end
+    Lighting.Ambient = Color3.fromRGB(102, 102, 102)
+    Lighting.Brightness = 1
+    Lighting.ColorShift_Bottom = Color3.new(0, 0, 0)
+    Lighting.ColorShift_Top = Color3.new(0, 0, 0)
+    Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+    Lighting.ClockTime = 14
+    Lighting.ExposureCompensation = 0
+    Lighting.GeographicLatitude = 41.28
+end
+
+local current = nil
+local applied = false
+
+local envs = {
+    ["Coastal"] = function()
+        clear()
+        Lighting.Ambient = Color3.fromRGB(80, 100, 120)
+        Lighting.Brightness = 2.8
+        Lighting.ColorShift_Bottom = Color3.fromRGB(100, 140, 180)
+        Lighting.ColorShift_Top = Color3.fromRGB(180, 200, 220)
+        Lighting.OutdoorAmbient = Color3.fromRGB(90, 120, 150)
+        Lighting.ClockTime = 13.5
+        Lighting.ExposureCompensation = 0.2
+        Lighting.GeographicLatitude = 30
+        
+        local s = Instance.new("Sky", Lighting)
+        s.SunTextureId = "rbxassetid://6196665106"
+        s.SunAngularSize = 18
+        
+        local a = Instance.new("Atmosphere", Lighting)
+        a.Density = 0.3
+        a.Offset = 0.15
+        a.Color = Color3.fromRGB(180, 210, 230)
+        a.Decay = Color3.fromRGB(160, 190, 210)
+        a.Glare = 0.4
+        a.Haze = 1.2
+        
+        local f = Instance.new("FogEffect", Lighting)
+        f.Color = Color3.fromRGB(170, 200, 220)
+        f.Density = 0.07
+        
+        local c = Instance.new("ColorCorrectionEffect", Lighting)
+        c.Brightness = 0.05
+        c.Contrast = 0.08
+        c.Saturation = 0.1
+        c.TintColor = Color3.fromRGB(120, 160, 200)
+    end,
+
+    ["Autumn"] = function()
+        clear()
+        Lighting.Ambient = Color3.fromRGB(110, 90, 70)
+        Lighting.Brightness = 2.3
+        Lighting.ColorShift_Bottom = Color3.fromRGB(140, 110, 90)
+        Lighting.ColorShift_Top = Color3.fromRGB(220, 170, 120)
+        Lighting.OutdoorAmbient = Color3.fromRGB(125, 100, 80)
+        Lighting.ClockTime = 15
+        Lighting.ExposureCompensation = -0.1
+        Lighting.GeographicLatitude = 45
+        
+        local s = Instance.new("Sky", Lighting)
+        s.SunTextureId = "rbxassetid://6196665106"
+        s.SunAngularSize = 20
+        
+        local r = Instance.new("SunRaysEffect", Lighting)
+        r.Intensity = 0.3
+        
+        local a = Instance.new("Atmosphere", Lighting)
+        a.Density = 0.45
+        a.Offset = 0.2
+        a.Color = Color3.fromRGB(220, 180, 140)
+        a.Decay = Color3.fromRGB(200, 160, 120)
+        a.Glare = 0.35
+        a.Haze = 2.2
+        
+        local f = Instance.new("FogEffect", Lighting)
+        f.Color = Color3.fromRGB(190, 160, 130)
+        f.Density = 0.09
+        
+        local c = Instance.new("ColorCorrectionEffect", Lighting)
+        c.Contrast = 0.12
+        c.Saturation = 0.2
+        c.TintColor = Color3.fromRGB(200, 150, 100)
+    end,
+
+    ["Dawn"] = function()
+        clear()
+        Lighting.Ambient = Color3.fromRGB(50, 40, 70)
+        Lighting.Brightness = 1.8
+        Lighting.ColorShift_Bottom = Color3.fromRGB(120, 100, 170)
+        Lighting.ColorShift_Top = Color3.fromRGB(255, 120, 60)
+        Lighting.OutdoorAmbient = Color3.fromRGB(70, 50, 90)
+        Lighting.ClockTime = 6.2
+        Lighting.ExposureCompensation = -0.6
+        Lighting.GeographicLatitude = 45
+        
+        local s = Instance.new("Sky", Lighting)
+        s.SunTextureId = "rbxassetid://6196665106"
+        s.SunAngularSize = 22
+        
+        local r = Instance.new("SunRaysEffect", Lighting)
+        r.Intensity = 0.5
+        
+        local a = Instance.new("Atmosphere", Lighting)
+        a.Density = 0.6
+        a.Offset = 0.2
+        a.Color = Color3.fromRGB(255, 150, 100)
+        a.Decay = Color3.fromRGB(220, 130, 90)
+        a.Glare = 0.8
+        a.Haze = 4
+        
+        local f = Instance.new("FogEffect", Lighting)
+        f.Color = Color3.fromRGB(180, 140, 160)
+        f.Density = 0.1
+        
+        local b = Instance.new("BloomEffect", Lighting)
+        b.Intensity = 0.3
+        b.Size = 22
+    end,
+
+    ["Dusk"] = function()
+        clear()
+        Lighting.Ambient = Color3.fromRGB(60, 50, 80)
+        Lighting.Brightness = 1.6
+        Lighting.ColorShift_Bottom = Color3.fromRGB(90, 70, 120)
+        Lighting.ColorShift_Top = Color3.fromRGB(220, 130, 80)
+        Lighting.OutdoorAmbient = Color3.fromRGB(75, 60, 95)
+        Lighting.ClockTime = 18.8
+        Lighting.ExposureCompensation = -0.5
+        Lighting.GeographicLatitude = 45
+        
+        local s = Instance.new("Sky", Lighting)
+        s.SunTextureId = "rbxassetid://6196665106"
+        s.SunAngularSize = 23
+        
+        local r = Instance.new("SunRaysEffect", Lighting)
+        r.Intensity = 0.45
+        
+        local a = Instance.new("Atmosphere", Lighting)
+        a.Density = 0.55
+        a.Offset = 0.22
+        a.Color = Color3.fromRGB(230, 140, 90)
+        a.Decay = Color3.fromRGB(200, 120, 80)
+        a.Glare = 0.7
+        a.Haze = 3.5
+        
+        local f = Instance.new("FogEffect", Lighting)
+        f.Color = Color3.fromRGB(160, 130, 150)
+        f.Density = 0.08
+        
+        local b = Instance.new("BloomEffect", Lighting)
+        b.Intensity = 0.25
+        b.Size = 20
+    end,
+
+    ["Stormy"] = function()
+        clear()
+        Lighting.Ambient = Color3.fromRGB(50, 50, 60)
+        Lighting.Brightness = 0.7
+        Lighting.ColorShift_Bottom = Color3.fromRGB(60, 60, 80)
+        Lighting.ColorShift_Top = Color3.fromRGB(40, 40, 60)
+        Lighting.OutdoorAmbient = Color3.fromRGB(55, 55, 70)
+        Lighting.ClockTime = 16
+        Lighting.ExposureCompensation = -1.2
+        Lighting.GeographicLatitude = 45
+        
+        local a = Instance.new("Atmosphere", Lighting)
+        a.Density = 0.9
+        a.Offset = 0.35
+        a.Color = Color3.fromRGB(90, 90, 110)
+        a.Haze = 15
+        a.Glare = 0.05
+        
+        local b = Instance.new("BloomEffect", Lighting)
+        b.Intensity = 0.7
+        b.Size = 10
+        b.Threshold = 0.65
+        
+        local f = Instance.new("FogEffect", Lighting)
+        f.Color = Color3.fromRGB(70, 75, 85)
+        f.Density = 0.2
+        
+        local c = Instance.new("Sky", Lighting)
+        c.SkyboxBk = "rbxassetid://183069588"
+        c.SkyboxDn = "rbxassetid://183069672"
+        c.SkyboxFt = "rbxassetid://183069623"
+        c.SkyboxLf = "rbxassetid://183069651"
+        c.SkyboxRt = "rbxassetid://183069606"
+        c.SkyboxUp = "rbxassetid://183069637"
+        
+        local cc = Instance.new("ColorCorrectionEffect", Lighting)
+        cc.Brightness = -0.15
+        cc.Contrast = 0.2
+        cc.Saturation = -0.25
+    end,
+
+    ["Desert"] = function()
+        clear()
+        Lighting.Ambient = Color3.fromRGB(130, 100, 70)
+        Lighting.Brightness = 3.8
+        Lighting.ColorShift_Bottom = Color3.fromRGB(210, 160, 110)
+        Lighting.ColorShift_Top = Color3.fromRGB(255, 210, 120)
+        Lighting.OutdoorAmbient = Color3.fromRGB(160, 120, 80)
+        Lighting.ClockTime = 14.5
+        Lighting.ExposureCompensation = 0.7
+        Lighting.GeographicLatitude = 25
+        
+        local a = Instance.new("Atmosphere", Lighting)
+        a.Density = 0.25
+        a.Offset = 0.15
+        a.Color = Color3.fromRGB(210, 180, 130)
+        a.Decay = Color3.fromRGB(190, 160, 110)
+        a.Glare = 0.4
+        a.Haze = 1.5
+        
+        local s = Instance.new("Sky", Lighting)
+        s.SunTextureId = "rbxassetid://6196665106"
+        s.SunAngularSize = 20
+        
+        local f = Instance.new("FogEffect", Lighting)
+        f.Color = Color3.fromRGB(200, 170, 130)
+        f.Density = 0.05
+        
+        local c = Instance.new("ColorCorrectionEffect", Lighting)
+        c.Contrast = 0.15
+        c.Saturation = 0.1
+        c.TintColor = Color3.fromRGB(255, 200, 120)
+    end,
+
+    ["Rainy"] = function()
+        clear()
+        Lighting.Ambient = Color3.fromRGB(90, 90, 110)
+        Lighting.Brightness = 1.2
+        Lighting.ColorShift_Bottom = Color3.fromRGB(110, 110, 130)
+        Lighting.ColorShift_Top = Color3.fromRGB(80, 80, 100)
+        Lighting.OutdoorAmbient = Color3.fromRGB(100, 100, 120)
+        Lighting.ClockTime = 14
+        Lighting.ExposureCompensation = -0.6
+        Lighting.GeographicLatitude = 45
+        
+        local a = Instance.new("Atmosphere", Lighting)
+        a.Density = 0.7
+        a.Offset = 0.25
+        a.Color = Color3.fromRGB(160, 160, 180)
+        a.Decay = Color3.fromRGB(130, 130, 150)
+        a.Glare = 0.1
+        a.Haze = 8
+        
+        local c = Instance.new("Sky", Lighting)
+        c.SkyboxBk = "rbxassetid://570557514"
+        c.SkyboxDn = "rbxassetid://570557775"
+        c.SkyboxFt = "rbxassetid://570557559"
+        c.SkyboxLf = "rbxassetid://570557518"
+        c.SkyboxRt = "rbxassetid://570557524"
+        c.SkyboxUp = "rbxassetid://570557485"
+        
+        local f = Instance.new("FogEffect", Lighting)
+        f.Color = Color3.fromRGB(140, 150, 160)
+        f.Density = 0.15
+        
+        local r = Instance.new("ParticleEmitter", Lighting)
+        r.Texture = "rbxassetid://2452689026"
+        r.Size = NumberSequence.new(0.5)
+        r.Transparency = NumberSequence.new(0.3)
+        r.Speed = NumberRange.new(20, 25)
+        r.Rotation = NumberRange.new(0, 360)
+        r.Lifetime = NumberRange.new(2, 3)
+        r.Rate = 100
+        r.VelocitySpread = 50
+        
+        local cc = Instance.new("ColorCorrectionEffect", Lighting)
+        cc.Brightness = -0.1
+        cc.Contrast = 0.15
+        cc.Saturation = -0.2
+        cc.TintColor = Color3.fromRGB(130, 140, 150)
+    end,
+
+    ["Sunset"] = function()
+        clear()
+        Lighting.Ambient = Color3.new(0,0,0)
+        Lighting.Brightness = 2
+        Lighting.ColorShift_Bottom = Color3.fromRGB(0,150,255)
+        Lighting.ColorShift_Top = Color3.fromRGB(255,147,0)
+        Lighting.EnvironmentDiffuseScale = 1
+        Lighting.EnvironmentSpecularScale = 1
+        Lighting.OutdoorAmbient = Color3.new(0,0,0)
+        Lighting.ClockTime = 17.258
+        Lighting.ExposureCompensation = -1
+        
+        local s = Instance.new("Sky",Lighting)
+        s.CelestialBodiesShown = true
+        s.SunTextureId = "rbxassetid://6281397906"
+        
+        local r = Instance.new("SunRaysEffect",Lighting)
+        r.Intensity = 1
+        
+        local a = Instance.new("Atmosphere",Lighting)
+        a.Density = 0.5
+        a.Color = Color3.fromRGB(192,192,192)
+        a.Decay = Color3.fromRGB(192,192,192)
+        a.Glare = 1.5
+        a.Haze = 2
+    end
+}
+
+local Dropdownboii = zawarudo:Dropdown({
+    Title = "Shader Selector",
+    Values = {"Coastal", "Autumn", "Dawn", "Dusk", "Stormy", "Desert", "Rainy", "Sunset"},
+    Value = "Sunset",
+    Callback = function(option) 
+        current = option
+        applied = false
+    end
+})
+
+local Buttonskibidi = zawarudo:Button({
+    Title = "Apply Shader",
+    Desc = "Click to apply selected Shader. Click again to reset.",
+    Locked = false,
+    Callback = function()
+        if current then
+            if applied then
+                clear()
+                applied = false
+            else
+                local func = envs[current]
+                if func then
+                    func()
+                    applied = true
+                    
+                    if current == "Stormy" then
+                        spawn(function()
+                            while applied and current == "Stormy" do
+                                wait(math.random(8, 20))
+                                if applied and current == "Stormy" then
+                                    local orig = Lighting.Brightness
+                                    Lighting.Brightness = 2.5
+                                    wait(0.1)
+                                    Lighting.Brightness = orig
+                                    wait(0.15)
+                                    Lighting.Brightness = 1.8
+                                    wait(0.07)
+                                    Lighting.Brightness = orig
+                                end
+                            end
+                        end)
+                    end
+                end
+            end
+        end
+    end
+})
 
 
 
