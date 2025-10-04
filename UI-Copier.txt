@@ -1,0 +1,461 @@
+local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
+local Lib = loadstring(game:HttpGet(repo .. "Library.lua"))()
+local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
+local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
+
+local Win = Lib:CreateWindow({
+    Title = "Copy UI",
+    Footer = "Expect Some Bugs",
+    Icon = 104549958225566,
+    ShowCustomCursor = true,
+})
+
+local Tab = {
+    Main = Win:AddTab("Copy UI", "copy"),
+    Set = Win:AddTab("Settings", "settings"),
+}
+
+getgenv().Opt = Lib.Options
+getgenv().Tog = Lib.Toggles
+
+local Set = {
+    Vis = "Default",
+    SaveFile = false
+}
+
+local function Fnd(pth)
+    if not pth or pth == "" then 
+        return nil 
+    end
+    
+    if pth == "PlayerGui" then
+        local ply = game:GetService("Players").LocalPlayer
+        return ply and ply:FindFirstChild("PlayerGui")
+    elseif pth == "CoreGui" then
+        return game:GetService("CoreGui")
+    elseif pth == "StarterGui" then
+        return game:GetService("StarterGui")
+    end
+    
+    local prt = {}
+    for pt in pth:gmatch("[^%.]+") do
+        table.insert(prt, pt)
+    end
+    
+    if #prt == 0 then return nil end
+    
+    local cur
+    if prt[1] == "PlayerGui" then
+        local ply = game:GetService("Players").LocalPlayer
+        cur = ply and ply:FindFirstChild("PlayerGui")
+        table.remove(prt, 1)
+    elseif prt[1] == "CoreGui" then
+        cur = game:GetService("CoreGui")
+        table.remove(prt, 1)
+    elseif prt[1] == "StarterGui" then
+        cur = game:GetService("StarterGui")
+        table.remove(prt, 1)
+    else
+        cur = game
+    end
+    
+    if not cur then return nil end
+    
+    for _, pt in ipairs(prt) do
+        local fnd = cur:FindFirstChild(pt)
+        if not fnd then
+            for _, chd in ipairs(cur:GetChildren()) do
+                if chd.Name:lower() == pt:lower() then
+                    fnd = chd
+                    break
+                end
+            end
+        end
+        if not fnd then return nil end
+        cur = fnd
+    end
+    
+    return cur
+end
+
+local function Num(val)
+    if math.floor(val) == val then
+        return tostring(val)
+    else
+        return string.format("%.6f", val)
+    end
+end
+
+local function Val(val)
+    local typ = typeof(val)
+    
+    if typ == "number" then
+        return Num(val)
+    elseif typ == "Color3" then
+        return string.format("Color3.fromRGB(%d,%d,%d)", 
+            math.round(val.R * 255), 
+            math.round(val.G * 255), 
+            math.round(val.B * 255))
+    elseif typ == "Vector2" then
+        return string.format("Vector2.new(%s,%s)", Num(val.X), Num(val.Y))
+    elseif typ == "UDim2" then
+        return string.format("UDim2.new(%s,%d,%s,%d)", 
+            Num(val.X.Scale), val.X.Offset,
+            Num(val.Y.Scale), val.Y.Offset)
+    elseif typ == "UDim" then
+        return string.format("UDim.new(%s,%d)", Num(val.Scale), val.Offset)
+    elseif typ == "string" then
+        return string.format("%q", val)
+    elseif typ == "boolean" then
+        return tostring(val)
+    elseif typ == "EnumItem" then
+        return tostring(val)
+    else
+        return tostring(val)
+    end
+end
+
+local function Prp(ins, nam)
+    local suc = pcall(function()
+        local v = ins[nam]
+        return true
+    end)
+    return suc
+end
+
+local function Get(ins, nam)
+    local suc, v = pcall(function()
+        return ins[nam]
+    end)
+    return suc and v or nil
+end
+
+local function Def(cls, nam)
+    local suc, v = pcall(function()
+        local tmp = Instance.new(cls)
+        local d = tmp[nam]
+        tmp:Destroy()
+        return d
+    end)
+    return suc and v or nil
+end
+
+local function Prs(ins)
+    local cls = ins.ClassName
+    local prp = {}
+    
+    local lst = {
+        ScreenGui = {"Name", "ZIndexBehavior", "ResetOnSpawn", "IgnoreGuiInset"},
+        Frame = {"Name", "Size", "Position", "AnchorPoint", "BackgroundColor3", "BackgroundTransparency", "BorderSizePixel", "Visible", "ZIndex", "LayoutOrder", "ClipsDescendants"},
+        TextLabel = {"Name", "Size", "Position", "AnchorPoint", "BackgroundColor3", "BackgroundTransparency", "BorderSizePixel", "Visible", "ZIndex", "Text", "TextColor3", "TextSize", "Font", "TextScaled", "TextWrapped", "RichText", "TextTransparency", "TextXAlignment", "TextYAlignment", "TextTruncate", "LineHeight", "MaxVisibleGraphemes", "TextStrokeColor3", "TextStrokeTransparency"},
+        TextButton = {"Name", "Size", "Position", "AnchorPoint", "BackgroundColor3", "BackgroundTransparency", "BorderSizePixel", "Visible", "ZIndex", "Text", "TextColor3", "TextSize", "Font", "TextScaled", "TextWrapped", "RichText", "TextTransparency", "TextXAlignment", "TextYAlignment", "TextTruncate", "LineHeight", "MaxVisibleGraphemes", "TextStrokeColor3", "TextStrokeTransparency", "AutoButtonColor"},
+        TextBox = {"Name", "Size", "Position", "AnchorPoint", "BackgroundColor3", "BackgroundTransparency", "BorderSizePixel", "Visible", "ZIndex", "Text", "TextColor3", "TextSize", "Font", "TextScaled", "TextWrapped", "RichText", "TextTransparency", "TextXAlignment", "TextYAlignment", "TextTruncate", "LineHeight", "MaxVisibleGraphemes", "TextStrokeColor3", "TextStrokeTransparency", "ClearTextOnFocus", "MultiLine", "PlaceholderText", "PlaceholderColor3", "CursorPosition", "SelectionStart", "ShowNativeInput", "TextEditable"},
+        UICorner = {"Name", "CornerRadius"},
+        UIStroke = {"Name", "Color", "Thickness", "Transparency", "ApplyStrokeMode"},
+        UIAspectRatioConstraint = {"Name", "AspectRatio"},
+        UIListLayout = {"Name", "Padding", "FillDirection", "HorizontalAlignment", "VerticalAlignment", "SortOrder"},
+        UIPadding = {"Name", "PaddingLeft", "PaddingRight", "PaddingTop", "PaddingBottom"},
+        ImageLabel = {"Name", "Size", "Position", "AnchorPoint", "BackgroundColor3", "BackgroundTransparency", "BorderSizePixel", "Visible", "ZIndex", "Image", "ImageColor3", "ImageTransparency", "ScaleType"},
+        ImageButton = {"Name", "Size", "Position", "AnchorPoint", "BackgroundColor3", "BackgroundTransparency", "BorderSizePixel", "Visible", "ZIndex", "Image", "ImageColor3", "ImageTransparency", "ScaleType", "AutoButtonColor"},
+        ScrollingFrame = {"Name", "Size", "Position", "AnchorPoint", "BackgroundColor3", "BackgroundTransparency", "BorderSizePixel", "Visible", "ZIndex", "CanvasSize", "ScrollBarImageColor3", "ScrollBarThickness", "AutomaticCanvasSize"}
+    }
+    
+    if lst[cls] then
+        for _, p in ipairs(lst[cls]) do
+            if Prp(ins, p) then
+                table.insert(prp, p)
+            end
+        end
+    end
+    
+    return prp
+end
+
+local function FmtByt(bytes)
+    if bytes < 1024 then
+        return bytes .. "B"
+    elseif bytes < 1024 * 1024 then
+        return string.format("%.0fKB", bytes / 1024)
+    else
+        return string.format("%.0fMB", bytes / (1024 * 1024))
+    end
+end
+
+local function Cpy(pth)
+    local ins = Fnd(pth)
+    if not ins then
+        return nil, "Instance not found"
+    end
+    
+    local out = {}
+    local cnt = 0
+    local map = {}
+    
+    local all = {}
+    local function Col(inst)
+        table.insert(all, inst)
+        for _, chd in ipairs(inst:GetChildren()) do
+            if not chd:IsA("Script") and not chd:IsA("LocalScript") and not chd:IsA("ModuleScript") then
+                Col(chd)
+            end
+        end
+    end
+    Col(ins)
+    
+    for _, inst in ipairs(all) do
+        cnt = cnt + 1
+        local nam = inst.ClassName .. cnt
+        map[inst] = nam
+        
+        table.insert(out, string.format("local %s = Instance.new(%q)", nam, inst.ClassName))
+        
+        local prp = Prs(inst)
+        
+        for _, pnam in ipairs(prp) do
+            local cur = Get(inst, pnam)
+            if cur ~= nil then
+                local def = Def(inst.ClassName, pnam)
+                
+                if pnam == "Visible" then
+                    if Set.Vis == "Visible" then
+                        table.insert(out, string.format("%s.%s = %s", nam, pnam, Val(true)))
+                    elseif Set.Vis == "NotVisible" then
+                        table.insert(out, string.format("%s.%s = %s", nam, pnam, Val(false)))
+                    elseif pnam == "Name" or pnam == "Size" or pnam == "Position" or pnam == "Visible" or pnam == "Text" or cur ~= def then
+                        table.insert(out, string.format("%s.%s = %s", nam, pnam, Val(cur)))
+                    end
+                else
+                    if pnam == "Name" or pnam == "Size" or pnam == "Position" or pnam == "Visible" or pnam == "Text" or cur ~= def then
+                        table.insert(out, string.format("%s.%s = %s", nam, pnam, Val(cur)))
+                    end
+                end
+            end
+        end
+        
+        if inst == ins then
+            table.insert(out, string.format("%s.Parent = game.Players.LocalPlayer.PlayerGui", nam))
+        else
+            local par = map[inst.Parent]
+            if par then
+                table.insert(out, string.format("%s.Parent = %s", nam, par))
+            end
+        end
+    end
+    
+    local lines = #out
+    local text = table.concat(out, "\n")
+    local letters = #text
+    local bytes = #text
+    
+    local final = {
+        "--[[ Expect some bugs - Arch ]]\n",
+        "--[[" .. lines .. " lines]]\n",
+        "--[[" .. letters .. " letters]]\n",
+        "--[[" .. FmtByt(bytes) .. "]]\n",
+        "",
+        text
+    }
+    
+    return table.concat(final, "\n"), lines, letters, bytes
+end
+
+local function SvF(txt, nam)
+    if not writefile then
+        return false, "File functions not available"
+    end
+    
+    local folderPath = nam:match("^(.*[/\\])")
+    if folderPath and isfolder and makefolder then
+        local currentPath = ""
+        for folder in folderPath:gmatch("([^/\\]+)[/\\]?") do
+            currentPath = currentPath .. folder .. "/"
+            if not isfolder(currentPath) then
+                makefolder(currentPath)
+            end
+        end
+    end
+    
+    local suc, err = pcall(function()
+        writefile(nam, txt)
+    end)
+    
+    return suc, err
+end
+
+local function Pth()
+    local sug = {"PlayerGui", "CoreGui", "StarterGui"}
+    
+    pcall(function()
+        local ply = game:GetService("Players").LocalPlayer
+        if ply then
+            local pg = ply:FindFirstChild("PlayerGui")
+            if pg then
+                for _, gui in ipairs(pg:GetChildren()) do
+                    if gui:IsA("ScreenGui") then
+                        table.insert(sug, "PlayerGui." .. gui.Name)
+                    end
+                end
+            end
+        end
+    end)
+    
+    pcall(function()
+        for _, gui in ipairs(game:GetService("CoreGui"):GetChildren()) do
+            if gui:IsA("ScreenGui") then
+                table.insert(sug, "CoreGui." .. gui.Name)
+            end
+        end
+    end)
+    
+    return sug
+end
+
+local Grp = Tab.Main:AddLeftGroupbox("Gurt")
+
+local Inp = Grp:AddInput("UIPath", {
+    Default = "PlayerGui",
+    Placeholder = "PlayerGui.YourScreenGui",
+    Tooltip = "Put the UI Path here Gurt",
+})
+
+local Sug = Grp:AddDropdown("PathSuggestions", {
+    Values = Pth(),
+    Default = 1,
+    Text = "Easier way to get UI Path",
+    Tooltip = "Select UI Path you want blud",
+})
+
+local Vis = Grp:AddDropdown("VisibilitySetting", {
+    Values = {"Default", "Visible", "NotVisible"},
+    Default = 1,
+    Text = "UI Visibility",
+    Tooltip = "Set the UI visibility",
+    Callback = function(val)
+        Set.Vis = val
+    end
+})
+
+Grp:AddToggle("SaveFile", {
+    Text = "Save as File",
+    Default = false,
+    Tooltip = "Save UI as .lua file",
+    Callback = function(val)
+        Set.SaveFile = val
+    end
+})
+
+Grp:AddButton("Use Selected UI", function()
+    if Opt.PathSuggestions then
+        local sel = Opt.PathSuggestions.Value
+        if sel then
+            Opt.UIPath:SetValue(sel)
+        end
+    end
+end)
+
+Grp:AddButton("Refresh", function()
+    local new = Pth()
+    Opt.PathSuggestions:SetValues(new)
+    Lib:Notify("Paths refreshed", 2)
+end)
+
+Grp:AddButton("Copy UI to Clipboard", function()
+    local pth = Opt.UIPath.Value
+    if not pth or pth == "" then
+        Lib:Notify("Set UI path", 3)
+        return
+    end
+    
+    Lib:Notify("Copying UI", 2)
+    
+    local suc, res, lin, let, byt = pcall(function()
+        return Cpy(pth)
+    end)
+    
+    if suc and res then
+        if Set.SaveFile then
+            local dateStr = os.date("%Y-%m-%d") -- Format: YYYY-MM-DD
+            local fileName = pth .. " - " .. dateStr .. ".txt"
+            local folderName = "Copy-UI"
+            local fullPath = folderName .. "/" .. fileName
+            
+            local folderSuc, folderErr = pcall(function()
+                if not isfolder then 
+                    return false, "No isfolder function"
+                end
+                if not isfolder(folderName) then
+                    makefolder(folderName)
+                end
+                return true
+            end)
+            
+            if folderSuc then
+                local fsuc, ferr = SvF(res, fullPath)
+                if fsuc then
+                    Lib:Notify("UI saved to " .. fileName .. " - " .. lin .. " lines, " .. let .. " letters, " .. FmtByt(byt), 5)
+                else
+                    Lib:Notify("File save failed: " .. tostring(ferr), 4)
+                end
+            else
+                Lib:Notify("Create Folder failed", 4)
+            end
+        else
+            local tes, err = pcall(function()
+                local tst = res:gsub("local (%w+) = Instance.new", "local TestCopy_%1 = Instance.new")
+                tst = tst:gsub("(%w+)%.Parent = game%.Players%.LocalPlayer", "TestCopy_%1.Parent = game.Players.LocalPlayer")
+                loadstring(tst)()
+            end)
+            
+            if tes then
+                setclipboard(res)
+                Lib:Notify("UI copied to clipboard - " .. lin .. " lines, " .. let .. " letters, " .. FmtByt(byt), 4)
+            else
+                setclipboard(res)
+                Lib:Notify("UI copied to clipboard - " .. lin .. " lines, " .. let .. " letters, " .. FmtByt(byt), 4)
+            end
+        end
+    else
+        Lib:Notify("Copy failed", 4)
+    end
+end)
+
+local Inf = Tab.Main:AddRightGroupbox("How to use")
+
+Inf:AddLabel("Enter the UI Path you want to Copy", true)
+Inf:AddLabel("Example: PlayerGui.ScreenGui", true)
+Inf:AddLabel("Click copy to clipboard", true)
+
+local Men = Tab.Set:AddLeftGroupbox("Menu")
+
+Men:AddLabel("Menu Keybind"):AddKeyPicker("MenuKeybind", { 
+    Default = "RightShift", 
+    NoUI = true, 
+    Text = "Menu keybind" 
+})
+
+Men:AddButton("Unload", function()
+    Lib:Unload()
+end)
+
+Lib.ToggleKeybind = Opt.MenuKeybind
+
+ThemeManager:SetLibrary(Lib)
+SaveManager:SetLibrary(Lib)
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({ "MenuKeybind" })
+
+SaveManager:BuildConfigSection(Tab.Set)
+ThemeManager:ApplyToTab(Tab.Set)
+SaveManager:LoadAutoloadConfig()
+
+task.spawn(function()
+    while true do
+        task.wait(10)
+        if Lib.Unloaded then break end
+        pcall(function()
+            if Opt.PathSuggestions then
+                Opt.PathSuggestions:SetValues(Pth())
+            end
+        end)
+    end
+end)
