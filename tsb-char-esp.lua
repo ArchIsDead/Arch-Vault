@@ -7,7 +7,8 @@ local p = game:GetService("Players")
 local i = {
     KJ = "rbxassetid://17140853847",
     Sorcerer = "rbxassetid://15143528348",
-    Tech = "rbxassetid://113596928331434"
+    Tech = "rbxassetid://113596928331434",
+    Monster = "rbxassetid://92669838586269"
 }
 local d = "rbxassetid://12252402662"
 
