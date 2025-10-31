@@ -11,6 +11,7 @@ local Floor = math.floor
 local Round = math.round
 local Sin = math.sin
 local Cos = math.cos
+local Clear = table.clear
 local Unpack = table.unpack
 local Find = table.find
 local Create = table.create
@@ -36,7 +37,6 @@ local HealthTextOffset = Vector2.new(3, 0)
 local HealthBarOutlineOffset = Vector2.new(0, 1)
 local NameOffset = Vector2.new(0, 2)
 local DistanceOffset = Vector2.new(0, 2)
-local PingOffset = Vector2.new(0, 2)
 local Vertices = {
     Vector3.new(-1, -1, -1),
     Vector3.new(-1, 1, -1),
@@ -143,14 +143,40 @@ function EspObject:Construct()
     self.childCount = 0
     self.bin = {}
     self.drawings = {
+        box3d = {
+            {
+                self:_create("Line", { Thickness = 1, Visible = false }),
+                self:_create("Line", { Thickness = 1, Visible = false }),
+                self:_create("Line", { Thickness = 1, Visible = false })
+            },
+            {
+                self:_create("Line", { Thickness = 1, Visible = false }),
+                self:_create("Line", { Thickness = 1, Visible = false }),
+                self:_create("Line", { Thickness = 1, Visible = false })
+            },
+            {
+                self:_create("Line", { Thickness = 1, Visible = false }),
+                self:_create("Line", { Thickness = 1, Visible = false }),
+                self:_create("Line", { Thickness = 1, Visible = false })
+            },
+            {
+                self:_create("Line", { Thickness = 1, Visible = false }),
+                self:_create("Line", { Thickness = 1, Visible = false }),
+                self:_create("Line", { Thickness = 1, Visible = false })
+            }
+        },
         visible = {
             tracerOutline = self:_create("Line", { Thickness = 3, Visible = false }),
             tracer = self:_create("Line", { Thickness = 1, Visible = false }),
+            boxFill = self:_create("Square", { Filled = true, Visible = false }),
+            boxOutline = self:_create("Square", { Thickness = 3, Visible = false }),
+            box = self:_create("Square", { Thickness = 1, Visible = false }),
             healthBarOutline = self:_create("Line", { Thickness = 3, Visible = false }),
             healthBar = self:_create("Line", { Thickness = 1, Visible = false }),
             healthText = self:_create("Text", { Center = true, Visible = false }),
             name = self:_create("Text", { Text = self.player.DisplayName, Center = true, Visible = false }),
             distance = self:_create("Text", { Center = true, Visible = false }),
+            weapon = self:_create("Text", { Center = true, Visible = false }),
             ping = self:_create("Text", { Center = true, Visible = false }),
         },
         hidden = {
@@ -166,16 +192,11 @@ function EspObject:Construct()
 end
 
 function EspObject:Destruct()
-    if self.renderConnection then
-        self.renderConnection:Disconnect()
+    self.renderConnection:Disconnect()
+    for i = 1, #self.bin do
+        self.bin[i]:Remove()
     end
-    if self.bin then
-        for i = 1, #self.bin do
-            if self.bin[i] then
-                self.bin[i]:Remove()
-            end
-        end
-    end
+    Clear(self)
 end
 
 function EspObject:Update()
@@ -183,6 +204,7 @@ function EspObject:Update()
     self.options = Interface.teamSettings[Interface.isFriendly(self.player) and "friendly" or "enemy"]
     self.character = Interface.getCharacter(self.player)
     self.health, self.maxHealth = Interface.getHealth(self.player)
+    self.weapon = Interface.getWeapon(self.player)
     self.ping = PlayerPings[self.player] or "N/A"
     self.enabled = self.options.enabled and self.character and not
         (#Interface.whitelist > 0 and not Find(Interface.whitelist, self.player.UserId))
@@ -203,18 +225,19 @@ function EspObject:Update()
     end
 
     if self.onScreen then
+        local Cache = self.charCache
         local Children = GetChildren(self.character)
-        if #self.charCache == 0 or self.childCount ~= #Children then
-            self.charCache = {}
+        if not Cache[1] or self.childCount ~= #Children then
+            Clear(Cache)
             for i = 1, #Children do
                 local Part = Children[i]
                 if IsA(Part, "BasePart") and IsBodyPart(Part.Name) then
-                    table.insert(self.charCache, Part)
+                    Cache[#Cache + 1] = Part
                 end
             end
             self.childCount = #Children
         end
-        self.corners = CalculateCorners(GetBoundingBox(self.charCache))
+        self.corners = CalculateCorners(GetBoundingBox(Cache))
     elseif self.options.offScreenArrow then
         local CFrame = Camera.CFrame
         local Flat = FromMatrix(CFrame.Position, CFrame.RightVector, Vector3.yAxis)
@@ -224,22 +247,42 @@ function EspObject:Update()
 end
 
 function EspObject:Render()
-    if not self.enabled then return end
-    if not self.drawings then return end
-    
     local OnScreen = self.onScreen or false
     local Enabled = self.enabled or false
     local Visible = self.drawings.visible
     local Hidden = self.drawings.hidden
+    local Box3D = self.drawings.box3d
     local Interface = self.interface
     local Options = self.options
     local Corners = self.corners
 
-    if not Visible then return end
+    Visible.box.Visible = Enabled and OnScreen and Options.box
+    Visible.boxOutline.Visible = Visible.box.Visible and Options.boxOutline
+    if Visible.box.Visible then
+        local Box = Visible.box
+        Box.Position = Corners.topLeft
+        Box.Size = Corners.bottomRight - Corners.topLeft
+        Box.Color = ParseColor(self, Options.boxColor[1])
+        Box.Transparency = Options.boxColor[2]
+        local BoxOutline = Visible.boxOutline
+        BoxOutline.Position = Box.Position
+        BoxOutline.Size = Box.Size
+        BoxOutline.Color = ParseColor(self, Options.boxOutlineColor[1], true)
+        BoxOutline.Transparency = Options.boxOutlineColor[2]
+    end
+
+    Visible.boxFill.Visible = Enabled and OnScreen and Options.boxFill
+    if Visible.boxFill.Visible then
+        local BoxFill = Visible.boxFill
+        BoxFill.Position = Corners.topLeft
+        BoxFill.Size = Corners.bottomRight - Corners.topLeft
+        BoxFill.Color = ParseColor(self, Options.boxFillColor[1])
+        BoxFill.Transparency = Options.boxFillColor[2]
+    end
 
     Visible.healthBar.Visible = Enabled and OnScreen and Options.healthBar
     Visible.healthBarOutline.Visible = Visible.healthBar.Visible and Options.healthBarOutline
-    if Visible.healthBar.Visible and Corners then
+    if Visible.healthBar.Visible then
         local BarFrom = Corners.topLeft - HealthBarOffset
         local BarTo = Corners.bottomLeft - HealthBarOffset
         local HealthBar = Visible.healthBar
@@ -254,7 +297,7 @@ function EspObject:Render()
     end
 
     Visible.healthText.Visible = Enabled and OnScreen and Options.healthText
-    if Visible.healthText.Visible and Corners then
+    if Visible.healthText.Visible then
         local BarFrom = Corners.topLeft - HealthBarOffset
         local BarTo = Corners.bottomLeft - HealthBarOffset
         local HealthText = Visible.healthText
@@ -269,7 +312,7 @@ function EspObject:Render()
     end
 
     Visible.name.Visible = Enabled and OnScreen and Options.name
-    if Visible.name.Visible and Corners then
+    if Visible.name.Visible then
         local Name = Visible.name
         Name.Size = Interface.sharedSettings.textSize
         Name.Font = Interface.sharedSettings.textFont
@@ -281,7 +324,7 @@ function EspObject:Render()
     end
 
     Visible.distance.Visible = Enabled and OnScreen and self.distance and Options.distance
-    if Visible.distance.Visible and Corners then
+    if Visible.distance.Visible then
         local Distance = Visible.distance
         Distance.Text = Round(self.distance) .. " studs"
         Distance.Size = Interface.sharedSettings.textSize
@@ -293,8 +336,21 @@ function EspObject:Render()
         Distance.Position = (Corners.bottomLeft + Corners.bottomRight)*0.5 + DistanceOffset
     end
 
+    Visible.weapon.Visible = Enabled and OnScreen and Options.weapon
+    if Visible.weapon.Visible then
+        local Weapon = Visible.weapon
+        Weapon.Text = self.weapon
+        Weapon.Size = Interface.sharedSettings.textSize
+        Weapon.Font = Interface.sharedSettings.textFont
+        Weapon.Color = ParseColor(self, Options.weaponColor[1])
+        Weapon.Transparency = Options.weaponColor[2]
+        Weapon.Outline = Options.weaponOutline
+        Weapon.OutlineColor = ParseColor(self, Options.weaponOutlineColor, true)
+        Weapon.Position = (Corners.bottomLeft + Corners.bottomRight)*0.5 + (Visible.distance.Visible and DistanceOffset + Vector2.yAxis*Visible.distance.TextBounds.Y or Vector2.zero)
+    end
+
     Visible.ping.Visible = Enabled and OnScreen and Options.ping and self.ping ~= "N/A"
-    if Visible.ping.Visible and Corners then
+    if Visible.ping.Visible then
         local Ping = Visible.ping
         Ping.Text = self.ping .. "ms"
         Ping.Size = Interface.sharedSettings.textSize
@@ -307,14 +363,14 @@ function EspObject:Render()
         if Visible.distance.Visible then
             BasePosition = Visible.distance.Position + Vector2.yAxis * Visible.distance.TextBounds.Y
         else
-            BasePosition = (Corners.bottomLeft + Corners.bottomRight)*0.5 + PingOffset
+            BasePosition = (Corners.bottomLeft + Corners.bottomRight)*0.5 + DistanceOffset
         end
         Ping.Position = BasePosition
     end
 
     Visible.tracer.Visible = Enabled and OnScreen and Options.tracer
     Visible.tracerOutline.Visible = Visible.tracer.Visible and Options.tracerOutline
-    if Visible.tracer.Visible and Corners then
+    if Visible.tracer.Visible then
         local Tracer = Visible.tracer
         Tracer.Color = ParseColor(self, Options.tracerColor[1])
         Tracer.Transparency = Options.tracerColor[2]
@@ -345,6 +401,28 @@ function EspObject:Render()
         ArrowOutline.Color = ParseColor(self, Options.offScreenArrowOutlineColor[1], true)
         ArrowOutline.Transparency = Options.offScreenArrowOutlineColor[2]
     end
+
+    local Box3DEnabled = Enabled and OnScreen and Options.box3d
+    for i = 1, #Box3D do
+        local Face = Box3D[i]
+        for i2 = 1, #Face do
+            local Line = Face[i2]
+            Line.Visible = Box3DEnabled
+            Line.Color = ParseColor(self, Options.box3dColor[1])
+            Line.Transparency = Options.box3dColor[2]
+        end
+        if Box3DEnabled then
+            local Line1 = Face[1]
+            Line1.From = Corners.corners[i]
+            Line1.To = Corners.corners[i == 4 and 1 or i+1]
+            local Line2 = Face[2]
+            Line2.From = Corners.corners[i == 4 and 1 or i+1]
+            Line2.To = Corners.corners[i == 4 and 5 or i+5]
+            local Line3 = Face[3]
+            Line3.From = Corners.corners[i == 4 and 5 or i+5]
+            Line3.To = Corners.corners[i == 4 and 8 or i+4]
+        end
+    end
 end
 
 local ChamObject = {}
@@ -366,17 +444,12 @@ function ChamObject:Construct()
 end
 
 function ChamObject:Destruct()
-    if self.updateConnection then
-        self.updateConnection:Disconnect()
-    end
-    if self.highlight then
-        self.highlight:Destroy()
-    end
+    self.updateConnection:Disconnect()
+    self.highlight:Destroy()
+    Clear(self)
 end
 
 function ChamObject:Update()
-    if not self.highlight then return end
-    
     local Highlight = self.highlight
     local Interface = self.interface
     local Character = Interface.getCharacter(self.player)
@@ -408,6 +481,12 @@ local EspInterface = {
     teamSettings = {
         enemy = {
             enabled = false,
+            box = false,
+            boxColor = { Color3.new(1,0,0), 1 },
+            boxOutline = true,
+            boxOutlineColor = { Color3.new(), 1 },
+            boxFill = false,
+            boxFillColor = { Color3.new(1,0,0), 0.5 },
             healthBar = false,
             healthyColor = Color3.new(0,1,0),
             dyingColor = Color3.new(1,0,0),
@@ -417,10 +496,16 @@ local EspInterface = {
             healthTextColor = { Color3.new(1,1,1), 1 },
             healthTextOutline = true,
             healthTextOutlineColor = Color3.new(),
+            box3d = false,
+            box3dColor = { Color3.new(1,0,0), 1 },
             name = false,
             nameColor = { Color3.new(1,1,1), 1 },
             nameOutline = true,
             nameOutlineColor = Color3.new(),
+            weapon = false,
+            weaponColor = { Color3.new(1,1,1), 1 },
+            weaponOutline = true,
+            weaponOutlineColor = Color3.new(),
             distance = false,
             distanceColor = { Color3.new(1,1,1), 1 },
             distanceOutline = true,
@@ -447,6 +532,12 @@ local EspInterface = {
         },
         friendly = {
             enabled = false,
+            box = false,
+            boxColor = { Color3.new(0,1,0), 1 },
+            boxOutline = true,
+            boxOutlineColor = { Color3.new(), 1 },
+            boxFill = false,
+            boxFillColor = { Color3.new(0,1,0), 0.5 },
             healthBar = false,
             healthyColor = Color3.new(0,1,0),
             dyingColor = Color3.new(1,0,0),
@@ -456,10 +547,16 @@ local EspInterface = {
             healthTextColor = { Color3.new(1,1,1), 1 },
             healthTextOutline = true,
             healthTextOutlineColor = Color3.new(),
+            box3d = false,
+            box3dColor = { Color3.new(0,1,0), 1 },
             name = false,
             nameColor = { Color3.new(1,1,1), 1 },
             nameOutline = true,
             nameOutlineColor = Color3.new(),
+            weapon = false,
+            weaponColor = { Color3.new(1,1,1), 1 },
+            weaponOutline = true,
+            weaponOutlineColor = Color3.new(),
             distance = false,
             distanceColor = { Color3.new(1,1,1), 1 },
             distanceOutline = true,
@@ -489,33 +586,27 @@ local EspInterface = {
 
 function EspInterface.Load()
     if EspInterface._hasLoaded then return end
-    
     local function CreateObject(Player)
         EspInterface._objectCache[Player] = {
             EspObject.new(Player, EspInterface),
             ChamObject.new(Player, EspInterface)
         }
     end
-    
     local function RemoveObject(Player)
         local Object = EspInterface._objectCache[Player]
         if Object then
             for i = 1, #Object do
-                if Object[i] and Object[i].Destruct then
-                    Object[i]:Destruct()
-                end
+                Object[i]:Destruct()
             end
             EspInterface._objectCache[Player] = nil
         end
     end
-    
     local PlayersList = Players:GetPlayers()
     for i = 1, #PlayersList do
         if PlayersList[i] ~= LocalPlayer then
             CreateObject(PlayersList[i])
         end
     end
-    
     EspInterface.playerAdded = Players.PlayerAdded:Connect(CreateObject)
     EspInterface.playerRemoving = Players.PlayerRemoving:Connect(RemoveObject)
     EspInterface._hasLoaded = true
@@ -523,26 +614,14 @@ end
 
 function EspInterface.Unload()
     if not EspInterface._hasLoaded then return end
-    
-    for Player, Object in pairs(EspInterface._objectCache) do
-        if Object then
-            for i = 1, #Object do
-                if Object[i] and Object[i].Destruct then
-                    Object[i]:Destruct()
-                end
-            end
+    for Index, Object in next, EspInterface._objectCache do
+        for i = 1, #Object do
+            Object[i]:Destruct()
         end
+        EspInterface._objectCache[Index] = nil
     end
-    
-    EspInterface._objectCache = {}
-    
-    if EspInterface.playerAdded then
-        EspInterface.playerAdded:Disconnect()
-    end
-    if EspInterface.playerRemoving then
-        EspInterface.playerRemoving:Disconnect()
-    end
-    
+    EspInterface.playerAdded:Disconnect()
+    EspInterface.playerRemoving:Disconnect()
     EspInterface._hasLoaded = false
 end
 
