@@ -11,7 +11,6 @@ local Floor = math.floor
 local Round = math.round
 local Sin = math.sin
 local Cos = math.cos
-local Clear = table.clear
 local Unpack = table.unpack
 local Find = table.find
 local Create = table.create
@@ -131,110 +130,106 @@ function EspObject:_create(Class, Properties)
     for Property, Value in next, Properties do
         pcall(function() Drawing[Property] = Value end)
     end
-    Self.bin[#Self.bin + 1] = Drawing
+    self.bin[#self.bin + 1] = Drawing
     return Drawing
 end
 
 function EspObject:Construct()
-    Self.charCache = {}
-    Self.childCount = 0
-    Self.bin = {}
-    Self.drawings = {
+    self.charCache = {}
+    self.childCount = 0
+    self.bin = {}
+    self.drawings = {
         visible = {
-            tracerOutline = Self:_create("Line", { Thickness = 3, Visible = false }),
-            tracer = Self:_create("Line", { Thickness = 1, Visible = false }),
-            healthBarOutline = Self:_create("Line", { Thickness = 3, Visible = false }),
-            healthBar = Self:_create("Line", { Thickness = 1, Visible = false }),
-            healthText = Self:_create("Text", { Center = true, Visible = false }),
-            name = Self:_create("Text", { Text = Self.player.DisplayName, Center = true, Visible = false }),
-            distance = Self:_create("Text", { Center = true, Visible = false }),
-            ping = Self:_create("Text", { Center = true, Visible = false }),
+            tracerOutline = self:_create("Line", { Thickness = 3, Visible = false }),
+            tracer = self:_create("Line", { Thickness = 1, Visible = false }),
+            healthBarOutline = self:_create("Line", { Thickness = 3, Visible = false }),
+            healthBar = self:_create("Line", { Thickness = 1, Visible = false }),
+            healthText = self:_create("Text", { Center = true, Visible = false }),
+            name = self:_create("Text", { Text = self.player.DisplayName, Center = true, Visible = false }),
+            distance = self:_create("Text", { Center = true, Visible = false }),
+            ping = self:_create("Text", { Center = true, Visible = false }),
         },
         hidden = {
-            arrowOutline = Self:_create("Triangle", { Thickness = 3, Visible = false }),
-            arrow = Self:_create("Triangle", { Filled = true, Visible = false })
+            arrowOutline = self:_create("Triangle", { Thickness = 3, Visible = false }),
+            arrow = self:_create("Triangle", { Filled = true, Visible = false })
         }
     }
 
-    Self.renderConnection = RunService.Heartbeat:Connect(function(DeltaTime)
-        Self:Update(DeltaTime)
-        Self:Render(DeltaTime)
+    self.renderConnection = RunService.Heartbeat:Connect(function(DeltaTime)
+        self:Update(DeltaTime)
+        self:Render(DeltaTime)
     end)
 end
 
 function EspObject:Destruct()
-    if Self.renderConnection then
-        Self.renderConnection:Disconnect()
+    if self.renderConnection then
+        self.renderConnection:Disconnect()
     end
-    if Self.bin then
-        for i = 1, #Self.bin do
-            if Self.bin[i] then
-                Self.bin[i]:Remove()
+    if self.bin then
+        for i = 1, #self.bin do
+            if self.bin[i] then
+                self.bin[i]:Remove()
             end
         end
     end
-    Self.charCache = nil
-    Self.bin = nil
-    Self.drawings = nil
 end
 
 function EspObject:Update()
-    local Interface = Self.interface
-    Self.options = Interface.teamSettings[Interface.isFriendly(Self.player) and "friendly" or "enemy"]
-    Self.character = Interface.getCharacter(Self.player)
-    Self.health, Self.maxHealth = Interface.getHealth(Self.player)
-    Self.ping = PlayerPings[Self.player] or "N/A"
-    Self.enabled = Self.options.enabled and Self.character and not
-        (#Interface.whitelist > 0 and not Find(Interface.whitelist, Self.player.UserId))
+    local Interface = self.interface
+    self.options = Interface.teamSettings[Interface.isFriendly(self.player) and "friendly" or "enemy"]
+    self.character = Interface.getCharacter(self.player)
+    self.health, self.maxHealth = Interface.getHealth(self.player)
+    self.ping = PlayerPings[self.player] or "N/A"
+    self.enabled = self.options.enabled and self.character and not
+        (#Interface.whitelist > 0 and not Find(Interface.whitelist, self.player.UserId))
 
-    local Head = Self.enabled and FindFirstChild(Self.character, "Head")
+    local Head = self.enabled and FindFirstChild(self.character, "Head")
     if not Head then
-        Self.charCache = {}
-        Self.onScreen = false
+        self.charCache = {}
+        self.onScreen = false
         return
     end
 
     local _, OnScreen, Depth = WorldToScreen(Head.Position)
-    Self.onScreen = OnScreen
-    Self.distance = Depth
+    self.onScreen = OnScreen
+    self.distance = Depth
 
     if Interface.sharedSettings.limitDistance and Depth > Interface.sharedSettings.maxDistance then
-        Self.onScreen = false
+        self.onScreen = false
     end
 
-    if Self.onScreen then
-        local Cache = Self.charCache
-        local Children = GetChildren(Self.character)
-        if not Cache[1] or Self.childCount ~= #Children then
-            Self.charCache = {}
+    if self.onScreen then
+        local Children = GetChildren(self.character)
+        if #self.charCache == 0 or self.childCount ~= #Children then
+            self.charCache = {}
             for i = 1, #Children do
                 local Part = Children[i]
                 if IsA(Part, "BasePart") and IsBodyPart(Part.Name) then
-                    table.insert(Self.charCache, Part)
+                    table.insert(self.charCache, Part)
                 end
             end
-            Self.childCount = #Children
+            self.childCount = #Children
         end
-        Self.corners = CalculateCorners(GetBoundingBox(Self.charCache))
-    elseif Self.options.offScreenArrow then
+        self.corners = CalculateCorners(GetBoundingBox(self.charCache))
+    elseif self.options.offScreenArrow then
         local CFrame = Camera.CFrame
         local Flat = FromMatrix(CFrame.Position, CFrame.RightVector, Vector3.yAxis)
         local ObjectSpace = PointToObjectSpace(Flat, Head.Position)
-        Self.direction = Vector2.new(ObjectSpace.X, ObjectSpace.Z).Unit
+        self.direction = Vector2.new(ObjectSpace.X, ObjectSpace.Z).Unit
     end
 end
 
 function EspObject:Render()
-    if not Self.enabled then return end
-    if not Self.drawings then return end
+    if not self.enabled then return end
+    if not self.drawings then return end
     
-    local OnScreen = Self.onScreen or false
-    local Enabled = Self.enabled or false
-    local Visible = Self.drawings.visible
-    local Hidden = Self.drawings.hidden
-    local Interface = Self.interface
-    local Options = Self.options
-    local Corners = Self.corners
+    local OnScreen = self.onScreen or false
+    local Enabled = self.enabled or false
+    local Visible = self.drawings.visible
+    local Hidden = self.drawings.hidden
+    local Interface = self.interface
+    local Options = self.options
+    local Corners = self.corners
 
     if not Visible then return end
 
@@ -245,12 +240,12 @@ function EspObject:Render()
         local BarTo = Corners.bottomLeft - HealthBarOffset
         local HealthBar = Visible.healthBar
         HealthBar.To = BarTo
-        HealthBar.From = Lerp2(BarTo, BarFrom, Self.health/Self.maxHealth)
-        HealthBar.Color = LerpColor(Options.dyingColor, Options.healthyColor, Self.health/Self.maxHealth)
+        HealthBar.From = Lerp2(BarTo, BarFrom, self.health/self.maxHealth)
+        HealthBar.Color = LerpColor(Options.dyingColor, Options.healthyColor, self.health/self.maxHealth)
         local HealthBarOutline = Visible.healthBarOutline
         HealthBarOutline.To = BarTo + HealthBarOutlineOffset
         HealthBarOutline.From = BarFrom - HealthBarOutlineOffset
-        HealthBarOutline.Color = ParseColor(Self, Options.healthBarOutlineColor[1], true)
+        HealthBarOutline.Color = ParseColor(self, Options.healthBarOutlineColor[1], true)
         HealthBarOutline.Transparency = Options.healthBarOutlineColor[2]
     end
 
@@ -259,14 +254,14 @@ function EspObject:Render()
         local BarFrom = Corners.topLeft - HealthBarOffset
         local BarTo = Corners.bottomLeft - HealthBarOffset
         local HealthText = Visible.healthText
-        HealthText.Text = Round(Self.health) .. "hp"
+        HealthText.Text = Round(self.health) .. "hp"
         HealthText.Size = Interface.sharedSettings.textSize
         HealthText.Font = Interface.sharedSettings.textFont
-        HealthText.Color = ParseColor(Self, Options.healthTextColor[1])
+        HealthText.Color = ParseColor(self, Options.healthTextColor[1])
         HealthText.Transparency = Options.healthTextColor[2]
         HealthText.Outline = Options.healthTextOutline
-        HealthText.OutlineColor = ParseColor(Self, Options.healthTextOutlineColor, true)
-        HealthText.Position = Lerp2(BarTo, BarFrom, Self.health/Self.maxHealth) - HealthText.TextBounds*0.5 - HealthTextOffset
+        HealthText.OutlineColor = ParseColor(self, Options.healthTextOutlineColor, true)
+        HealthText.Position = Lerp2(BarTo, BarFrom, self.health/self.maxHealth) - HealthText.TextBounds*0.5 - HealthTextOffset
     end
 
     Visible.name.Visible = Enabled and OnScreen and Options.name
@@ -274,36 +269,36 @@ function EspObject:Render()
         local Name = Visible.name
         Name.Size = Interface.sharedSettings.textSize
         Name.Font = Interface.sharedSettings.textFont
-        Name.Color = ParseColor(Self, Options.nameColor[1])
+        Name.Color = ParseColor(self, Options.nameColor[1])
         Name.Transparency = Options.nameColor[2]
         Name.Outline = Options.nameOutline
-        Name.OutlineColor = ParseColor(Self, Options.nameOutlineColor, true)
+        Name.OutlineColor = ParseColor(self, Options.nameOutlineColor, true)
         Name.Position = (Corners.topLeft + Corners.topRight)*0.5 - Vector2.yAxis*Name.TextBounds.Y - NameOffset
     end
 
-    Visible.distance.Visible = Enabled and OnScreen and Self.distance and Options.distance
+    Visible.distance.Visible = Enabled and OnScreen and self.distance and Options.distance
     if Visible.distance.Visible and Corners then
         local Distance = Visible.distance
-        Distance.Text = Round(Self.distance) .. " studs"
+        Distance.Text = Round(self.distance) .. " studs"
         Distance.Size = Interface.sharedSettings.textSize
         Distance.Font = Interface.sharedSettings.textFont
-        Distance.Color = ParseColor(Self, Options.distanceColor[1])
+        Distance.Color = ParseColor(self, Options.distanceColor[1])
         Distance.Transparency = Options.distanceColor[2]
         Distance.Outline = Options.distanceOutline
-        Distance.OutlineColor = ParseColor(Self, Options.distanceOutlineColor, true)
+        Distance.OutlineColor = ParseColor(self, Options.distanceOutlineColor, true)
         Distance.Position = (Corners.bottomLeft + Corners.bottomRight)*0.5 + DistanceOffset
     end
 
-    Visible.ping.Visible = Enabled and OnScreen and Options.ping and Self.ping ~= "N/A"
+    Visible.ping.Visible = Enabled and OnScreen and Options.ping and self.ping ~= "N/A"
     if Visible.ping.Visible and Corners then
         local Ping = Visible.ping
-        Ping.Text = Self.ping .. "ms"
+        Ping.Text = self.ping .. "ms"
         Ping.Size = Interface.sharedSettings.textSize
         Ping.Font = Interface.sharedSettings.textFont
-        Ping.Color = ParseColor(Self, Options.pingColor[1])
+        Ping.Color = ParseColor(self, Options.pingColor[1])
         Ping.Transparency = Options.pingColor[2]
         Ping.Outline = Options.pingOutline
-        Ping.OutlineColor = ParseColor(Self, Options.pingOutlineColor, true)
+        Ping.OutlineColor = ParseColor(self, Options.pingOutlineColor, true)
         local BasePosition
         if Visible.distance.Visible then
             BasePosition = Visible.distance.Position + Vector2.yAxis * Visible.distance.TextBounds.Y
@@ -317,14 +312,14 @@ function EspObject:Render()
     Visible.tracerOutline.Visible = Visible.tracer.Visible and Options.tracerOutline
     if Visible.tracer.Visible and Corners then
         local Tracer = Visible.tracer
-        Tracer.Color = ParseColor(Self, Options.tracerColor[1])
+        Tracer.Color = ParseColor(self, Options.tracerColor[1])
         Tracer.Transparency = Options.tracerColor[2]
         Tracer.To = (Corners.bottomLeft + Corners.bottomRight)*0.5
         Tracer.From = Options.tracerOrigin == "Middle" and ViewportSize*0.5 or
             Options.tracerOrigin == "Top" and ViewportSize*Vector2.new(0.5, 0) or
             Options.tracerOrigin == "Bottom" and ViewportSize*Vector2.new(0.5, 1)
         local TracerOutline = Visible.tracerOutline
-        TracerOutline.Color = ParseColor(Self, Options.tracerOutlineColor[1], true)
+        TracerOutline.Color = ParseColor(self, Options.tracerOutlineColor[1], true)
         TracerOutline.Transparency = Options.tracerOutlineColor[2]
         TracerOutline.To = Tracer.To
         TracerOutline.From = Tracer.From
@@ -332,18 +327,18 @@ function EspObject:Render()
 
     Hidden.arrow.Visible = Enabled and (not OnScreen) and Options.offScreenArrow
     Hidden.arrowOutline.Visible = Hidden.arrow.Visible and Options.offScreenArrowOutline
-    if Hidden.arrow.Visible and Self.direction then
+    if Hidden.arrow.Visible and self.direction then
         local Arrow = Hidden.arrow
-        Arrow.PointA = Min2(Max2(ViewportSize*0.5 + Self.direction*Options.offScreenArrowRadius, Vector2.one*25), ViewportSize - Vector2.one*25)
-        Arrow.PointB = Arrow.PointA - RotateVector(Self.direction, 0.45)*Options.offScreenArrowSize
-        Arrow.PointC = Arrow.PointA - RotateVector(Self.direction, -0.45)*Options.offScreenArrowSize
-        Arrow.Color = ParseColor(Self, Options.offScreenArrowColor[1])
+        Arrow.PointA = Min2(Max2(ViewportSize*0.5 + self.direction*Options.offScreenArrowRadius, Vector2.one*25), ViewportSize - Vector2.one*25)
+        Arrow.PointB = Arrow.PointA - RotateVector(self.direction, 0.45)*Options.offScreenArrowSize
+        Arrow.PointC = Arrow.PointA - RotateVector(self.direction, -0.45)*Options.offScreenArrowSize
+        Arrow.Color = ParseColor(self, Options.offScreenArrowColor[1])
         Arrow.Transparency = Options.offScreenArrowColor[2]
         local ArrowOutline = Hidden.arrowOutline
         ArrowOutline.PointA = Arrow.PointA
         ArrowOutline.PointB = Arrow.PointB
         ArrowOutline.PointC = Arrow.PointC
-        ArrowOutline.Color = ParseColor(Self, Options.offScreenArrowOutlineColor[1], true)
+        ArrowOutline.Color = ParseColor(self, Options.offScreenArrowOutlineColor[1], true)
         ArrowOutline.Transparency = Options.offScreenArrowOutlineColor[2]
     end
 end
@@ -360,36 +355,36 @@ function ChamObject.new(Player, Interface)
 end
 
 function ChamObject:Construct()
-    Self.highlight = Instance.new("Highlight", Container)
-    Self.updateConnection = RunService.Heartbeat:Connect(function()
-        Self:Update()
+    self.highlight = Instance.new("Highlight", Container)
+    self.updateConnection = RunService.Heartbeat:Connect(function()
+        self:Update()
     end)
 end
 
 function ChamObject:Destruct()
-    if Self.updateConnection then
-        Self.updateConnection:Disconnect()
+    if self.updateConnection then
+        self.updateConnection:Disconnect()
     end
-    if Self.highlight then
-        Self.highlight:Destroy()
+    if self.highlight then
+        self.highlight:Destroy()
     end
 end
 
 function ChamObject:Update()
-    if not Self.highlight then return end
+    if not self.highlight then return end
     
-    local Highlight = Self.highlight
-    local Interface = Self.interface
-    local Character = Interface.getCharacter(Self.player)
-    local Options = Interface.teamSettings[Interface.isFriendly(Self.player) and "friendly" or "enemy"]
+    local Highlight = self.highlight
+    local Interface = self.interface
+    local Character = Interface.getCharacter(self.player)
+    local Options = Interface.teamSettings[Interface.isFriendly(self.player) and "friendly" or "enemy"]
     local Enabled = Options.enabled and Character and not
-        (#Interface.whitelist > 0 and not Find(Interface.whitelist, Self.player.UserId))
+        (#Interface.whitelist > 0 and not Find(Interface.whitelist, self.player.UserId))
     Highlight.Enabled = Enabled and Options.chams
     if Highlight.Enabled then
         Highlight.Adornee = Character
-        Highlight.FillColor = ParseColor(Self, Options.chamsFillColor[1])
+        Highlight.FillColor = ParseColor(self, Options.chamsFillColor[1])
         Highlight.FillTransparency = Options.chamsFillColor[2]
-        Highlight.OutlineColor = ParseColor(Self, Options.chamsOutlineColor[1], true)
+        Highlight.OutlineColor = ParseColor(self, Options.chamsOutlineColor[1], true)
         Highlight.OutlineTransparency = Options.chamsOutlineColor[2]
         Highlight.DepthMode = Options.chamsVisibleOnly and "Occluded" or "AlwaysOnTop"
     end
