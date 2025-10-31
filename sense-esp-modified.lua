@@ -1,7 +1,6 @@
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
-local StatsService = game:GetService("Stats")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
@@ -101,19 +100,20 @@ local function ParseColor(Self, Color, IsOutline)
     return Color
 end
 
-local function GetPlayerPing(Player)
-    local Success, PingValue = pcall(function()
-        local NetworkStats = StatsService:FindFirstChild("Network")
-        if NetworkStats then
-            local ServerStats = NetworkStats:FindFirstChild("ServerStatsItem")
-            if ServerStats then
-                return math.floor(ServerStats:GetValue())
-            end
+local PlayerPings = {}
+
+local function UpdatePlayerPings()
+    for _, Player in pairs(Players:GetPlayers()) do
+        if Player ~= LocalPlayer then
+            local Success, Ping = pcall(function()
+                return Player:GetNetworkPing() * 1000
+            end)
+            PlayerPings[Player] = Success and math.floor(Ping) or "N/A"
         end
-        return "N/A"
-    end)
-    return Success and PingValue or "N/A"
+    end
 end
+
+RunService.Heartbeat:Connect(UpdatePlayerPings)
 
 local EspObject = {}
 EspObject.__index = EspObject
@@ -163,11 +163,19 @@ function EspObject:Construct()
 end
 
 function EspObject:Destruct()
-    Self.renderConnection:Disconnect()
-    for i = 1, #Self.bin do
-        Self.bin[i]:Remove()
+    if Self.renderConnection then
+        Self.renderConnection:Disconnect()
     end
-    Clear(Self)
+    if Self.bin then
+        for i = 1, #Self.bin do
+            if Self.bin[i] then
+                Self.bin[i]:Remove()
+            end
+        end
+    end
+    Self.charCache = nil
+    Self.bin = nil
+    Self.drawings = nil
 end
 
 function EspObject:Update()
@@ -175,7 +183,7 @@ function EspObject:Update()
     Self.options = Interface.teamSettings[Interface.isFriendly(Self.player) and "friendly" or "enemy"]
     Self.character = Interface.getCharacter(Self.player)
     Self.health, Self.maxHealth = Interface.getHealth(Self.player)
-    Self.ping = GetPlayerPing(Self.player)
+    Self.ping = PlayerPings[Self.player] or "N/A"
     Self.enabled = Self.options.enabled and Self.character and not
         (#Interface.whitelist > 0 and not Find(Interface.whitelist, Self.player.UserId))
 
@@ -198,16 +206,16 @@ function EspObject:Update()
         local Cache = Self.charCache
         local Children = GetChildren(Self.character)
         if not Cache[1] or Self.childCount ~= #Children then
-            Clear(Cache)
+            Self.charCache = {}
             for i = 1, #Children do
                 local Part = Children[i]
                 if IsA(Part, "BasePart") and IsBodyPart(Part.Name) then
-                    Cache[#Cache + 1] = Part
+                    table.insert(Self.charCache, Part)
                 end
             end
             Self.childCount = #Children
         end
-        Self.corners = CalculateCorners(GetBoundingBox(Cache))
+        Self.corners = CalculateCorners(GetBoundingBox(Self.charCache))
     elseif Self.options.offScreenArrow then
         local CFrame = Camera.CFrame
         local Flat = FromMatrix(CFrame.Position, CFrame.RightVector, Vector3.yAxis)
@@ -217,6 +225,9 @@ function EspObject:Update()
 end
 
 function EspObject:Render()
+    if not Self.enabled then return end
+    if not Self.drawings then return end
+    
     local OnScreen = Self.onScreen or false
     local Enabled = Self.enabled or false
     local Visible = Self.drawings.visible
@@ -225,9 +236,11 @@ function EspObject:Render()
     local Options = Self.options
     local Corners = Self.corners
 
+    if not Visible then return end
+
     Visible.healthBar.Visible = Enabled and OnScreen and Options.healthBar
     Visible.healthBarOutline.Visible = Visible.healthBar.Visible and Options.healthBarOutline
-    if Visible.healthBar.Visible then
+    if Visible.healthBar.Visible and Corners then
         local BarFrom = Corners.topLeft - HealthBarOffset
         local BarTo = Corners.bottomLeft - HealthBarOffset
         local HealthBar = Visible.healthBar
@@ -242,7 +255,7 @@ function EspObject:Render()
     end
 
     Visible.healthText.Visible = Enabled and OnScreen and Options.healthText
-    if Visible.healthText.Visible then
+    if Visible.healthText.Visible and Corners then
         local BarFrom = Corners.topLeft - HealthBarOffset
         local BarTo = Corners.bottomLeft - HealthBarOffset
         local HealthText = Visible.healthText
@@ -257,7 +270,7 @@ function EspObject:Render()
     end
 
     Visible.name.Visible = Enabled and OnScreen and Options.name
-    if Visible.name.Visible then
+    if Visible.name.Visible and Corners then
         local Name = Visible.name
         Name.Size = Interface.sharedSettings.textSize
         Name.Font = Interface.sharedSettings.textFont
@@ -269,7 +282,7 @@ function EspObject:Render()
     end
 
     Visible.distance.Visible = Enabled and OnScreen and Self.distance and Options.distance
-    if Visible.distance.Visible then
+    if Visible.distance.Visible and Corners then
         local Distance = Visible.distance
         Distance.Text = Round(Self.distance) .. " studs"
         Distance.Size = Interface.sharedSettings.textSize
@@ -282,7 +295,7 @@ function EspObject:Render()
     end
 
     Visible.ping.Visible = Enabled and OnScreen and Options.ping and Self.ping ~= "N/A"
-    if Visible.ping.Visible then
+    if Visible.ping.Visible and Corners then
         local Ping = Visible.ping
         Ping.Text = Self.ping .. "ms"
         Ping.Size = Interface.sharedSettings.textSize
@@ -294,8 +307,6 @@ function EspObject:Render()
         local BasePosition
         if Visible.distance.Visible then
             BasePosition = Visible.distance.Position + Vector2.yAxis * Visible.distance.TextBounds.Y
-        elseif Visible.name.Visible then
-            BasePosition = (Corners.bottomLeft + Corners.bottomRight)*0.5 + PingOffset
         else
             BasePosition = (Corners.bottomLeft + Corners.bottomRight)*0.5 + PingOffset
         end
@@ -304,7 +315,7 @@ function EspObject:Render()
 
     Visible.tracer.Visible = Enabled and OnScreen and Options.tracer
     Visible.tracerOutline.Visible = Visible.tracer.Visible and Options.tracerOutline
-    if Visible.tracer.Visible then
+    if Visible.tracer.Visible and Corners then
         local Tracer = Visible.tracer
         Tracer.Color = ParseColor(Self, Options.tracerColor[1])
         Tracer.Transparency = Options.tracerColor[2]
@@ -356,12 +367,17 @@ function ChamObject:Construct()
 end
 
 function ChamObject:Destruct()
-    Self.updateConnection:Disconnect()
-    Self.highlight:Destroy()
-    Clear(Self)
+    if Self.updateConnection then
+        Self.updateConnection:Disconnect()
+    end
+    if Self.highlight then
+        Self.highlight:Destroy()
+    end
 end
 
 function ChamObject:Update()
+    if not Self.highlight then return end
+    
     local Highlight = Self.highlight
     local Interface = Self.interface
     local Character = Interface.getCharacter(Self.player)
@@ -473,41 +489,61 @@ local EspInterface = {
 }
 
 function EspInterface.Load()
-    assert(not EspInterface._hasLoaded, "Esp has already been loaded.")
+    if EspInterface._hasLoaded then return end
+    
     local function CreateObject(Player)
         EspInterface._objectCache[Player] = {
             EspObject.new(Player, EspInterface),
             ChamObject.new(Player, EspInterface)
         }
     end
+    
     local function RemoveObject(Player)
         local Object = EspInterface._objectCache[Player]
         if Object then
             for i = 1, #Object do
-                Object[i]:Destruct()
+                if Object[i] and Object[i].Destruct then
+                    Object[i]:Destruct()
+                end
             end
             EspInterface._objectCache[Player] = nil
         end
     end
+    
     local PlayersList = Players:GetPlayers()
-    for i = 2, #PlayersList do
-        CreateObject(PlayersList[i])
+    for i = 1, #PlayersList do
+        if PlayersList[i] ~= LocalPlayer then
+            CreateObject(PlayersList[i])
+        end
     end
+    
     EspInterface.playerAdded = Players.PlayerAdded:Connect(CreateObject)
     EspInterface.playerRemoving = Players.PlayerRemoving:Connect(RemoveObject)
     EspInterface._hasLoaded = true
 end
 
 function EspInterface.Unload()
-    assert(EspInterface._hasLoaded, "Esp has not been loaded yet.")
-    for Index, Object in next, EspInterface._objectCache do
-        for i = 1, #Object do
-            Object[i]:Destruct()
+    if not EspInterface._hasLoaded then return end
+    
+    for Player, Object in pairs(EspInterface._objectCache) do
+        if Object then
+            for i = 1, #Object do
+                if Object[i] and Object[i].Destruct then
+                    Object[i]:Destruct()
+                end
+            end
         end
-        EspInterface._objectCache[Index] = nil
     end
-    EspInterface.playerAdded:Disconnect()
-    EspInterface.playerRemoving:Disconnect()
+    
+    EspInterface._objectCache = {}
+    
+    if EspInterface.playerAdded then
+        EspInterface.playerAdded:Disconnect()
+    end
+    if EspInterface.playerRemoving then
+        EspInterface.playerRemoving:Disconnect()
+    end
+    
     EspInterface._hasLoaded = false
 end
 
