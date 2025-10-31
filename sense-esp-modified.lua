@@ -105,9 +105,13 @@ local function UpdatePlayerPings()
     for _, Player in pairs(Players:GetPlayers()) do
         if Player ~= LocalPlayer then
             local Success, Ping = pcall(function()
-                return Player:GetNetworkPing() * 1000
+                local PingAttribute = Player:GetAttribute("Ping")
+                if PingAttribute then
+                    return math.floor(PingAttribute)
+                end
+                return "N/A"
             end)
-            PlayerPings[Player] = Success and math.floor(Ping) or "N/A"
+            PlayerPings[Player] = Success and Ping or "N/A"
         end
     end
 end
@@ -118,11 +122,11 @@ local EspObject = {}
 EspObject.__index = EspObject
 
 function EspObject.new(Player, Interface)
-    local Self = setmetatable({}, EspObject)
-    Self.player = Player
-    Self.interface = Interface
-    Self:Construct()
-    return Self
+    local self = setmetatable({}, EspObject)
+    self.player = Player
+    self.interface = Interface
+    self:Construct()
+    return self
 end
 
 function EspObject:_create(Class, Properties)
@@ -347,11 +351,11 @@ local ChamObject = {}
 ChamObject.__index = ChamObject
 
 function ChamObject.new(Player, Interface)
-    local Self = setmetatable({}, ChamObject)
-    Self.player = Player
-    Self.interface = Interface
-    Self:Construct()
-    return Self
+    local self = setmetatable({}, ChamObject)
+    self.player = Player
+    self.interface = Interface
+    self:Construct()
+    return self
 end
 
 function ChamObject:Construct()
