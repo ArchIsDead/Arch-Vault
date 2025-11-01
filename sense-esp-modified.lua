@@ -48,6 +48,22 @@ local Vertices = {
     Vector3.new(1, -1, 1)
 }
 
+local FontMap = {
+    Legacy = 0, Arial = 1, ArialBold = 2, SourceSans = 3, SourceSansBold = 4, 
+    SourceSansLight = 5, SourceSansItalic = 6, Bodoni = 7, Garamond = 8, 
+    Cartoon = 9, Code = 10, Highway = 11, SciFi = 12, Arcade = 13, Fantasy = 14, 
+    Antique = 15, SourceSansSemibold = 16, Gotham = 17, GothamMedium = 18, 
+    GothamBold = 19, GothamBlack = 20, AmaticSC = 21, Bangers = 22, 
+    Creepster = 23, DenkOne = 24, Fondamento = 25, FredokaOne = 26, 
+    GrenzeGotisch = 27, IndieFlower = 28, JosefinSans = 29, Jura = 30, 
+    Kalam = 31, LuckiestGuy = 32, Merriweather = 33, Michroma = 34, 
+    Nunito = 35, Oswald = 36, PatrickHand = 37, PermanentMarker = 38, 
+    Roboto = 39, RobotoCondensed = 40, RobotoMono = 41, Sarpanch = 42, 
+    SpecialElite = 43, TitilliumWeb = 44, Ubuntu = 45, BuilderSans = 46, 
+    BuilderSansMedium = 47, BuilderSansBold = 48, BuilderSansExtraBold = 49, 
+    Arimo = 50, ArimoBold = 51
+}
+
 local function IsBodyPart(Name)
     return Name == "Head" or Name:find("Torso") or Name:find("Leg") or Name:find("Arm")
 end
@@ -303,7 +319,12 @@ function EspObject:Render()
         local HealthText = Visible.healthText
         HealthText.Text = Round(self.health) .. "hp"
         HealthText.Size = Interface.sharedSettings.textSize
-        HealthText.Font = Interface.sharedSettings.textFont
+        local fontValue = Interface.sharedSettings.textFont
+        if type(fontValue) == "string" then
+            HealthText.Font = FontMap[fontValue] or 2
+        else
+            HealthText.Font = fontValue
+        end
         HealthText.Color = ParseColor(self, Options.healthTextColor[1])
         HealthText.Transparency = Options.healthTextColor[2]
         HealthText.Outline = Options.healthTextOutline
@@ -315,7 +336,12 @@ function EspObject:Render()
     if Visible.name.Visible then
         local Name = Visible.name
         Name.Size = Interface.sharedSettings.textSize
-        Name.Font = Interface.sharedSettings.textFont
+        local fontValue = Interface.sharedSettings.textFont
+        if type(fontValue) == "string" then
+            Name.Font = FontMap[fontValue] or 2
+        else
+            Name.Font = fontValue
+        end
         Name.Color = ParseColor(self, Options.nameColor[1])
         Name.Transparency = Options.nameColor[2]
         Name.Outline = Options.nameOutline
@@ -328,7 +354,12 @@ function EspObject:Render()
         local Distance = Visible.distance
         Distance.Text = Round(self.distance) .. " studs"
         Distance.Size = Interface.sharedSettings.textSize
-        Distance.Font = Interface.sharedSettings.textFont
+        local fontValue = Interface.sharedSettings.textFont
+        if type(fontValue) == "string" then
+            Distance.Font = FontMap[fontValue] or 2
+        else
+            Distance.Font = fontValue
+        end
         Distance.Color = ParseColor(self, Options.distanceColor[1])
         Distance.Transparency = Options.distanceColor[2]
         Distance.Outline = Options.distanceOutline
@@ -341,7 +372,12 @@ function EspObject:Render()
         local Weapon = Visible.weapon
         Weapon.Text = self.weapon
         Weapon.Size = Interface.sharedSettings.textSize
-        Weapon.Font = Interface.sharedSettings.textFont
+        local fontValue = Interface.sharedSettings.textFont
+        if type(fontValue) == "string" then
+            Weapon.Font = FontMap[fontValue] or 2
+        else
+            Weapon.Font = fontValue
+        end
         Weapon.Color = ParseColor(self, Options.weaponColor[1])
         Weapon.Transparency = Options.weaponColor[2]
         Weapon.Outline = Options.weaponOutline
@@ -354,7 +390,12 @@ function EspObject:Render()
         local Ping = Visible.ping
         Ping.Text = self.ping .. "ms"
         Ping.Size = Interface.sharedSettings.textSize
-        Ping.Font = Interface.sharedSettings.textFont
+        local fontValue = Interface.sharedSettings.textFont
+        if type(fontValue) == "string" then
+            Ping.Font = FontMap[fontValue] or 2
+        else
+            Ping.Font = fontValue
+        end
         Ping.Color = ParseColor(self, Options.pingColor[1])
         Ping.Transparency = Options.pingColor[2]
         Ping.Outline = Options.pingOutline
@@ -473,7 +514,7 @@ local EspInterface = {
     whitelist = {},
     sharedSettings = {
         textSize = 13,
-        textFont = 2,
+        textFont = "Ubuntu",
         limitDistance = false,
         maxDistance = 150,
         useTeamColor = false
