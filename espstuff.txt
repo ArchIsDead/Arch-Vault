@@ -1,0 +1,354 @@
+if _G.InjectedGui then return end
+_G.InjectedGui = true
+
+local runService = game:GetService("RunService")
+local workspaceService = game:GetService("Workspace")
+local playersService = game:GetService("Players")
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local localPlayer = playersService.LocalPlayer
+local currentCamera = workspaceService.CurrentCamera
+
+local espConfig = {
+    TeamCheck = false,
+    WallCheck = false,
+    Enabled = false,
+    ShowBox = false,
+    BoxType = "2D",
+    ShowName = false,
+    ShowHealth = false,
+    ShowDistance = false,
+    ShowSkeletons = false,
+    ActiveGun = false,
+    StudsToMeters = false,
+    MaxDistance = 5000,
+    CharSize = Vector2.new(4, 6),
+    SkeletonThickness = 2,
+    BoxOutlineColor = Color3.new(0, 0, 0),
+    BoxColor = Color3.new(1, 1, 1),
+    NameColor = Color3.new(1, 1, 1),
+    HealthOutlineColor = Color3.new(0, 0, 0),
+    HealthHighColor = Color3.new(0, 1, 0),
+    HealthLowColor = Color3.new(1, 0, 0),
+    DistanceColor = Color3.new(1, 1, 1),
+    SkeletonsColor = Color3.new(1, 1, 1),
+    ActiveGunColor = Color3.new(10, 15, 30),
+    Moderators = {},
+    Cheaters = {},
+    Special = {},
+    EspConnections = {},
+    Disconnect = function(self)
+        for _, connection in pairs(self.EspConnections) do
+            connection:Disconnect()
+        end
+    end
+}
+
+local skeletonBones = {
+    {"Head", "UpperTorso"},
+    {"UpperTorso", "LowerTorso"},
+    {"UpperTorso", "LeftUpperArm"},
+    {"UpperTorso", "RightUpperArm"},
+    {"LeftUpperArm", "LeftLowerArm"},
+    {"RightUpperArm", "RightLowerArm"},
+    {"LeftLowerArm", "LeftHand"},
+    {"RightLowerArm", "RightHand"},
+    {"LowerTorso", "LeftUpperLeg"},
+    {"LowerTorso", "RightUpperLeg"},
+    {"LeftUpperLeg", "LeftLowerLeg"},
+    {"RightUpperLeg", "RightLowerLeg"},
+    {"LeftLowerLeg", "LeftFoot"},
+    {"RightLowerLeg", "RightFoot"}
+}
+
+local playerESPData = {}
+
+local function createDrawing(drawingType, properties)
+    local drawing = Drawing.new(drawingType)
+    for property, value in pairs(properties) do
+        drawing[property] = value
+    end
+    return drawing
+end
+
+local function initializePlayerESP(player)
+    local espElements = {
+        BoxOutline = createDrawing("Square", {
+            Color = espConfig.BoxOutlineColor,
+            Thickness = 3,
+            Filled = false
+        }),
+        Box = createDrawing("Square", {
+            Color = espConfig.BoxColor,
+            Thickness = 1,
+            Filled = false
+        }),
+        Name = createDrawing("Text", {
+            Color = espConfig.NameColor,
+            Outline = true,
+            Center = true,
+            Size = 13
+        }),
+        HealthOutline = createDrawing("Line", {
+            Thickness = 3,
+            Color = espConfig.HealthOutlineColor
+        }),
+        Health = createDrawing("Line", {
+            Thickness = 1
+        }),
+        Distance = createDrawing("Text", {
+            Color = espConfig.DistanceColor,
+            Size = 12,
+            Outline = true,
+            Center = true
+        }),
+        ActiveGun = createDrawing("Text", {
+            Color = espConfig.ActiveGunColor,
+            Size = 12,
+            Outline = true,
+            Center = true
+        }),
+        BoxLines = {},
+        SkeletonLines = {}
+    }
+    playerESPData[player] = espElements
+end
+
+local function updateESPData()
+    replicatedStorage = game:GetService("ReplicatedStorage")
+    for player, espElements in pairs(playerESPData) do
+        local character = player.Character
+        if character and (not espConfig.TeamCheck or localPlayer.Team and player.Team ~= localPlayer.Team) then
+            local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+            if humanoidRootPart then
+                local screenPosition, onScreen = currentCamera:WorldToViewportPoint(humanoidRootPart.Position)
+                if onScreen then
+                    local top = currentCamera:WorldToViewportPoint(humanoidRootPart.Position + Vector3.new(0, 2.6, 0)).Y
+                    local bottom = currentCamera:WorldToViewportPoint(humanoidRootPart.Position - Vector3.new(0, 3, 0)).Y
+                    local height = (bottom - top) / 2
+                    local boxSize = Vector2.new(math.floor(height * 1.8), math.floor(height * 1.9))
+                    local boxPosition = Vector2.new(math.floor(screenPosition.X - boxSize.X / 2), math.floor(screenPosition.Y - height * 1.6 / 2))
+                    
+                    local humanoid = character:FindFirstChild("Humanoid")
+                    local healthPercentage = humanoid and humanoid.Health / humanoid.MaxHealth or 0
+                    
+                    local distance = (currentCamera.CFrame.Position - humanoidRootPart.Position).Magnitude
+                    local distanceText = espConfig.StudsToMeters and math.floor(distance / 4) .. " Meters" or math.floor(distance) .. " Studs"
+                    
+                    local weaponName = "None"
+                    local playersFolder = replicatedStorage:FindFirstChild("Players")
+                    if playersFolder then
+                        local playerFolder = playersFolder:FindFirstChild(player.Name)
+                        if playerFolder and playerFolder:FindFirstChild("Status") then
+                            local gameplayVariables = playerFolder.Status:FindFirstChild("GameplayVariables")
+                            if gameplayVariables then
+                                weaponName = gameplayVariables:FindFirstChild("EquippedTool") and gameplayVariables.EquippedTool.Value or "None"
+                            end
+                        end
+                    end
+                    
+                    espElements.Data = {
+                        HRP2D = screenPosition,
+                        BoxSize = boxSize,
+                        BoxPos = boxPosition,
+                        OnScreen = distance < espConfig.MaxDistance,
+                        HealthPercentage = healthPercentage,
+                        Distance = distanceText,
+                        Weapon = weaponName
+                    }
+                    
+                    if espConfig.ShowSkeletons and #espElements.SkeletonLines == 0 then
+                        for _, bonePair in ipairs(skeletonBones) do
+                            local bone1, bone2 = bonePair[1], bonePair[2]
+                            if character:FindFirstChild(bone1) and character:FindFirstChild(bone2) then
+                                local skeletonLine = {
+                                    createDrawing("Line", {
+                                        Thickness = espConfig.SkeletonThickness,
+                                        Color = espConfig.SkeletonsColor,
+                                        Transparency = 1
+                                    }),
+                                    bone1,
+                                    bone2
+                                }
+                                table.insert(espElements.SkeletonLines, skeletonLine)
+                            end
+                        end
+                    end
+                    
+                    for i = #espElements.SkeletonLines, 1, -1 do
+                        local skeletonLine = espElements.SkeletonLines[i]
+                        local line = skeletonLine[1]
+                        local bone1Name = skeletonLine[2]
+                        local bone2Name = skeletonLine[3]
+                        local bone1 = character:FindFirstChild(bone1Name)
+                        local bone2 = character:FindFirstChild(bone2Name)
+                        
+                        if bone1 and bone2 then
+                            local pos1 = currentCamera:WorldToViewportPoint(bone1.Position)
+                            local pos2 = currentCamera:WorldToViewportPoint(bone2.Position)
+                            line.From = Vector2.new(pos1.X, pos1.Y)
+                            line.To = Vector2.new(pos2.X, pos2.Y)
+                            line.Visible = espConfig.ShowSkeletons
+                        else
+                            line:Remove()
+                            table.remove(espElements.SkeletonLines, i)
+                        end
+                    end
+                else
+                    espElements.Data = { OnScreen = false }
+                end
+            else
+                espElements.Data = { OnScreen = false }
+            end
+        else
+            espElements.Data = { OnScreen = false }
+        end
+    end
+end
+
+local function renderESP()
+    playersService = game:GetService("Players")
+    for player, espElements in pairs(playerESPData) do
+        local data = espElements.Data
+        if data and data.OnScreen and espConfig.Enabled then
+            local boxPos = data.BoxPos
+            local boxSize = data.BoxSize
+            
+            if espConfig.ShowBox then
+                espElements.Box.Size = boxSize
+                espElements.Box.Position = boxPos
+                espElements.Box.Color = espConfig.BoxColor
+                espElements.Box.Visible = true
+                
+                espElements.BoxOutline.Size = boxSize
+                espElements.BoxOutline.Position = boxPos
+                espElements.BoxOutline.Color = espConfig.BoxOutlineColor
+                espElements.BoxOutline.Visible = true
+            else
+                espElements.Box.Visible = false
+                espElements.BoxOutline.Visible = false
+            end
+            
+            if espConfig.ShowHealth then
+                local healthPct = data.HealthPercentage
+                espElements.HealthOutline.From = Vector2.new(boxPos.X - 6, boxPos.Y + boxSize.Y)
+                espElements.HealthOutline.To = Vector2.new(espElements.HealthOutline.From.X, espElements.HealthOutline.From.Y - boxSize.Y)
+                espElements.Health.From = Vector2.new(boxPos.X - 5, boxPos.Y + boxSize.Y)
+                espElements.Health.To = Vector2.new(espElements.Health.From.X, espElements.Health.From.Y - healthPct * boxSize.Y)
+                espElements.Health.Color = espConfig.HealthLowColor:Lerp(espConfig.HealthHighColor, healthPct)
+                espElements.HealthOutline.Visible = true
+                espElements.Health.Visible = true
+            else
+                espElements.HealthOutline.Visible = false
+                espElements.Health.Visible = false
+            end
+            
+            if espConfig.ShowDistance then
+                espElements.Distance.Text = data.Distance
+                espElements.Distance.Color = espConfig.DistanceColor
+                espElements.Distance.Position = Vector2.new(boxPos.X + boxSize.X / 2, boxPos.Y + boxSize.Y + 5)
+                espElements.Distance.Visible = true
+            else
+                espElements.Distance.Visible = false
+            end
+            
+            if espConfig.ActiveGun then
+                espElements.ActiveGun.Text = tostring(data.Weapon)
+                espElements.ActiveGun.Color = espConfig.ActiveGunColor
+                espElements.ActiveGun.Position = Vector2.new(boxPos.X + boxSize.X / 2, boxPos.Y + boxSize.Y + 15)
+                espElements.ActiveGun.Visible = true
+            else
+                espElements.ActiveGun.Visible = false
+            end
+            
+            if espConfig.ShowName then
+                local nameText = string.lower(player.Name)
+                if espConfig.Special[player.Name] then
+                    nameText = string.lower(player.Name .. " | Special")
+                    espElements.Name.Color = Color3.new(0, 0, 1)
+                elseif espConfig.Cheaters[player.Name] then
+                    nameText = string.lower(player.Name .. " | Cheater")
+                    espElements.Name.Color = Color3.new(1, 0, 0)
+                elseif espConfig.Moderators[player.Name] then
+                    nameText = string.lower(player.Name .. " | Moderator")
+                    espElements.Name.Color = Color3.new(1, 0.6, 0)
+                else
+                    espElements.Name.Color = espConfig.NameColor
+                end
+                espElements.Name.Text = nameText
+                espElements.Name.Position = Vector2.new(boxSize.X / 2 + boxPos.X, boxPos.Y - 16)
+                espElements.Name.Visible = true
+            else
+                espElements.Name.Visible = false
+            end
+            
+            for _, skeletonLine in ipairs(espElements.SkeletonLines) do
+                skeletonLine[1].Visible = espConfig.ShowSkeletons
+            end
+        else
+            for key, element in pairs(espElements) do
+                if typeof(element) ~= "table" or element.Remove then
+                    element.Visible = false
+                end
+            end
+            
+            for _, skeletonLine in ipairs(espElements.SkeletonLines) do
+                skeletonLine[1]:Remove()
+            end
+            espElements.SkeletonLines = {}
+            
+            for _, boxLine in ipairs(espElements.BoxLines) do
+                boxLine:Remove()
+            end
+            espElements.BoxLines = {}
+        end
+    end
+end
+
+local function cleanupPlayerESP(player)
+    local espElements = playerESPData[player]
+    if espElements then
+        local function removeElement(element)
+            if element and (typeof(element) == "userdata" or typeof(element) == "table") and element.Remove then
+                element:Remove()
+            end
+        end
+        
+        removeElement(espElements.Box)
+        removeElement(espElements.BoxOutline)
+        removeElement(espElements.Name)
+        removeElement(espElements.Health)
+        removeElement(espElements.HealthOutline)
+        removeElement(espElements.Distance)
+        removeElement(espElements.ActiveGun)
+        
+        for _, skeletonLine in ipairs(espElements.SkeletonLines) do
+            removeElement(skeletonLine[1])
+        end
+        espElements.SkeletonLines = {}
+        
+        for _, boxLine in ipairs(espElements.BoxLines) do
+            removeElement(boxLine)
+        end
+        espElements.BoxLines = {}
+        
+        playerESPData[player] = nil
+    end
+end
+
+for _, player in ipairs(playersService:GetPlayers()) do
+    if player ~= localPlayer then
+        initializePlayerESP(player)
+    end
+end
+
+playersService.PlayerAdded:Connect(function(player)
+    if player ~= localPlayer then
+        initializePlayerESP(player)
+    end
+end)
+
+espConfig.EspConnections.HeartBeat = runService.Heartbeat:Connect(updateESPData)
+espConfig.EspConnections.RenderStepped = runService.RenderStepped:Connect(renderESP)
+espConfig.EspConnections.RemoveEsp = playersService.PlayerRemoving:Connect(cleanupPlayerESP)
+
+return espConfig
