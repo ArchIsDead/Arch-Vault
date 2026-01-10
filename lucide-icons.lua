@@ -1644,4 +1644,5 @@ return {
 	["zap"] = "rbxassetid://130551565616516",
 	["zoom-in"] = "rbxassetid://127956924984803",
 	["zoom-out"] = "rbxassetid://108334162607319",
+    ["discord"] = "rbxassetid://88082592882886",
 }
