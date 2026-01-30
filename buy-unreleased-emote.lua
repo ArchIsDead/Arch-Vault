@@ -39,7 +39,7 @@ Y2.Parent = T0
 Y2.Size = UDim2.new(1, -30, 1, 0)
 Y2.Position = UDim2.new(0, 5, 0, 0)
 Y2.BackgroundTransparency = 1
-Y2.Text = "Gamepass Gifter"
+Y2.Text = "R4 Was Here"
 Y2.TextColor3 = Color3.fromRGB(255, 255, 255)
 Y2.TextXAlignment = Enum.TextXAlignment.Left
 Y2.Font = Enum.Font.SourceSans
@@ -71,6 +71,7 @@ H9.ScrollingDirection = Enum.ScrollingDirection.Y
 H9.VerticalScrollBarInset = Enum.ScrollBarInset.Always
 
 J1.Parent = H9
+J1.Padding = UDim.new(0, 4)
 
 U7.MouseButton1Click:Connect(function()
     Q1.Enabled = false
@@ -91,10 +92,10 @@ local function L3(Z8, N6)
     local H3 = Instance.new("TextButton")
     
     V1.Size = UDim2.new(1, -4, 0, 80)
-    V1.Position = UDim2.new(0, 2, 0, N6)
     V1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     V1.BorderSizePixel = 1
     V1.BorderColor3 = Color3.fromRGB(192, 192, 192)
+    V1.ZIndex = 1
     V1.Parent = H9
     
     B0.Size = UDim2.new(0, 60, 0, 60)
@@ -141,12 +142,12 @@ local function L3(Z8, N6)
     I8.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     I8.BorderSizePixel = 1
     I8.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    I8.ZIndex = 5
+    I8.ZIndex = 100
     I8.Parent = V1
     
     O9.Size = UDim2.new(1, -20, 1, 0)
     O9.BackgroundTransparency = 1
-    O9.Text = "Select Receiver..."
+    O9.Text = R5.Name
     O9.Font = Enum.Font.SourceSans
     O9.TextSize = 13
     O9.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -170,7 +171,7 @@ local function L3(Z8, N6)
     C2.BorderSizePixel = 1
     C2.BorderColor3 = Color3.fromRGB(0, 0, 0)
     C2.Visible = false
-    C2.ZIndex = 10
+    C2.ZIndex = 1000
     C2.Parent = I8
     
     D5.Size = UDim2.new(1, 0, 1, 0)
@@ -179,11 +180,12 @@ local function L3(Z8, N6)
     D5.ScrollBarThickness = 8
     D5.ScrollBarImageColor3 = Color3.fromRGB(192, 192, 192)
     D5.CanvasSize = UDim2.new(0, 0, 0, 0)
+    D5.ZIndex = 1000
     D5.Parent = C2
     
     F7.Parent = D5
     
-    local M2 = nil
+    local M2 = R5.UserId
     
     local function K0()
         for _, P4 in pairs(D5:GetChildren()) do
@@ -193,6 +195,26 @@ local function L3(Z8, N6)
         end
         
         local Q3 = 0
+        
+        local selfBtn = Instance.new("TextButton")
+        selfBtn.Size = UDim2.new(1, 0, 0, 22)
+        selfBtn.BackgroundColor3 = Color3.fromRGB(200, 200, 255)
+        selfBtn.BorderSizePixel = 0
+        selfBtn.Text = R5.Name .. " (You)"
+        selfBtn.Font = Enum.Font.SourceSans
+        selfBtn.TextSize = 13
+        selfBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+        selfBtn.ZIndex = 1000
+        selfBtn.Parent = D5
+        
+        selfBtn.MouseButton1Click:Connect(function()
+            O9.Text = R5.Name
+            M2 = R5.UserId
+            C2.Visible = false
+        end)
+        
+        Q3 = Q3 + 22
+        
         for _, R6 in pairs(K2:GetPlayers()) do
             if R6 ~= R5 then
                 local S9 = Instance.new("TextButton")
@@ -203,6 +225,7 @@ local function L3(Z8, N6)
                 S9.Font = Enum.Font.SourceSans
                 S9.TextSize = 13
                 S9.TextColor3 = Color3.fromRGB(0, 0, 0)
+                S9.ZIndex = 1000
                 S9.Parent = D5
                 
                 S9.MouseButton1Click:Connect(function()
@@ -278,8 +301,12 @@ K2.PlayerRemoving:Connect(function()
 end)
 
 local function Y8()
-    H9:ClearAllChildren()
-    J1.Parent = H9
+    for _, C1 in pairs(H9:GetChildren()) do
+        if C1:IsA("Frame") then
+            C1:Destroy()
+        end
+    end
+    
     table.clear(W4)
     
     local Z4 = require(P3.Info)
@@ -315,7 +342,7 @@ local function Y8()
                 ID = L6.ProductId
             }
             
-            local N8 = L3(M7, E9)
+            local N8 = L3(M7, 0)
             
             F0 = F0 + 1
             E9 = E9 + 88
@@ -328,14 +355,14 @@ local function Y8()
                 ID = K5.ID
             }
             
-            local P0 = L3(O9, E9)
+            local P0 = L3(O9, 0)
             
             F0 = F0 + 1
             E9 = E9 + 88
         end
     end
     
-    Y2.Text = "Gamepass Gifter (" .. F0 .. ")"
+    Y2.Text = "arch.rest (" .. F0 .. ")"
     H9.CanvasSize = UDim2.new(0, 0, 0, E9)
 end
 
