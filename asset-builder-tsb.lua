@@ -1,1 +1,1 @@
-loadstring(game:HttpGet("https://r4-sec.vercel.app/files/1c4081260a135313bddbf33e87cff599"))()
+loadstring(game:HttpGet("https://api.jnkie.com/api/v1/luascripts/public/e5501749a5358dd282f68980aeca894c18a3855ea8af5c1b56a7bbe83ac83b8c/download"))()
