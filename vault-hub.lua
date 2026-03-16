@@ -1,5 +1,5 @@
 -- yes fully open source Vault
-
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ArchIsDead/Arch-Vault/refs/heads/main/69c3f624d51dddb6.lua.txt"))()
 setclipboard("https://discord.gg/cNJBSnUTSW")
 
 local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
